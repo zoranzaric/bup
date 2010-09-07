@@ -388,6 +388,12 @@ def columnate(l, prefix):
         out += prefix + ''.join(('%-*s' % (clen+2, s)) for s in row) + '\n'
     return out
 
+def strip_path(prefix, path):
+    if prefix != None and path.startswith(prefix):
+        return path[len(prefix):]
+    else:
+        return path
+
 
 # hashlib is only available in python 2.5 or higher, but the 'sha' module
 # produces a DeprecationWarning in python 2.6 or higher.  We want to support

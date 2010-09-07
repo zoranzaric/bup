@@ -32,6 +32,9 @@ opt.smaller = parse_num(opt.smaller or 0)
 if opt.bwlimit:
     client.bwlimit = parse_num(opt.bwlimit)
 
+if opt.strip and opt.strip.endswith("/"):
+    opt.strip = opt.strip[:-1]
+
 is_reverse = os.environ.get('BUP_SERVER_REVERSE')
 if is_reverse and opt.remote:
     o.fatal("don't use -r in reverse mode; it's automatic")

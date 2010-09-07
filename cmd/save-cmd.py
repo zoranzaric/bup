@@ -11,7 +11,7 @@ r,remote=  remote repository path
 t,tree     output a tree id
 c,commit   output a commit id
 n,name=    name of backup set to update (if any)
-d,date=    date for the commit
+d,date=    date for the commit (seconds since the epoch)
 v,verbose  increase log output (can be used more than once)
 q,quiet    don't show progress meter
 smaller=   only back up files smaller than n bytes

@@ -16,6 +16,7 @@ v,verbose  increase log output (can be used more than once)
 q,quiet    don't show progress meter
 smaller=   only back up files smaller than n bytes
 bwlimit=   maximum bytes/sec to transmit to server
+strip=     path-prefix to be stripped when saving
 """
 o = options.Options('bup save', optspec)
 (opt, flags, extra) = o.parse(sys.argv[1:])
@@ -188,7 +189,7 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
         continue
 
     assert(dir.startswith('/'))
-    dirp = dir.split('/')
+    dirp = strip_path(opt.strip, dir).split('/')
     while parts > dirp:
         _pop(force_tree = None)
     if dir != '/':

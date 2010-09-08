@@ -389,6 +389,12 @@ def columnate(l, prefix):
     return out
 
 def strip_path(prefix, path):
+    """Strips a given prefix from a path.
+
+    First both paths are normalized.
+
+    Raises an Exception if no prefix is given.
+    """
     if prefix == None:
         raise Exception('no path given')
 

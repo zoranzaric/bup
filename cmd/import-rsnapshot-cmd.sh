@@ -29,7 +29,7 @@ for SNAPSHOT in "$ABSPATH/"*; do
                 bup index -ux \
                     $BRANCH_PATH/
                 bup save \
-                    --strip=$BRANCH_PATH \
+                    --strip-path=$BRANCH_PATH \
                     --date=$DATE \
                     -n $BRANCH \
                     $BRANCH_PATH/

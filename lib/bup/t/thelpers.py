@@ -18,7 +18,7 @@ def test_strip_path():
     non_matching_prefix = "/home"
     path = "/var/backup/daily.0/localhost/etc/"
 
-    WVPASSEQ(strip_path(prefix, path), '/etc/')
+    WVPASSEQ(strip_path(prefix, path), '/etc')
     WVPASSEQ(strip_path(empty_prefix, path), path)
     WVPASSEQ(strip_path(non_matching_prefix, path), path)
-    WVPASSEQ(strip_path(None, path), path)
+    WVEXCEPT(Exception, strip_path, None, path)

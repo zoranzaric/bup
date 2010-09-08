@@ -389,8 +389,13 @@ def columnate(l, prefix):
     return out
 
 def strip_path(prefix, path):
-    if prefix != None and path.startswith(prefix):
-        return path[len(prefix):]
+    if prefix == None:
+        raise Exception('no path given')
+
+    normalized_prefix = realpath(prefix)
+    normalized_path = realpath(path)
+    if normalized_path.startswith(normalized_prefix):
+        return normalized_path[len(normalized_prefix):]
     else:
         return path
 

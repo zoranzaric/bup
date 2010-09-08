@@ -32,9 +32,6 @@ opt.smaller = parse_num(opt.smaller or 0)
 if opt.bwlimit:
     client.bwlimit = parse_num(opt.bwlimit)
 
-if opt.strip and opt.strip.endswith("/"):
-    opt.strip = opt.strip[:-1]
-
 if opt.date:
     try:
         #TODO make date parsing more robust
@@ -201,7 +198,10 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
         continue
 
     assert(dir.startswith('/'))
-    dirp = strip_path(opt.strip, dir).split('/')
+    if opt.strip:
+        dirp = strip_path(opt.strip, dir).split('/')
+    else:
+        dirp = dir.split('/')
     while parts > dirp:
         _pop(force_tree = None)
     if dir != '/':

@@ -34,11 +34,7 @@ if opt.bwlimit:
     client.bwlimit = parse_num(opt.bwlimit)
 
 if opt.date:
-    try:
-        #TODO make date parsing more robust
-        date = float(opt.date)
-    except ValueError, e:
-        o.fatal("invalid date format (should be a float): %r")
+    date = parse_date_or_fatal(opt.date, o.fatal)
 else:
     date = time.time()
 

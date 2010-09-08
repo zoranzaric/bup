@@ -419,6 +419,19 @@ def strip_base_path(path, base_paths):
             return strip_path(bp, path)
     return path
 
+def parse_date_or_fatal(str, fatal):
+    """Parses the given date or calls Option.fatal()
+
+    For now we expect a string that contains a float."""
+    try:
+        #TODO make date parsing more robust
+        date = float(str)
+    except ValueError, e:
+        # TODO use options.fatal
+        raise fatal('invalid date format (should be a float): %r' % e)
+    else:
+        return date
+
 
 # hashlib is only available in python 2.5 or higher, but the 'sha' module
 # produces a DeprecationWarning in python 2.6 or higher.  We want to support

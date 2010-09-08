@@ -49,13 +49,10 @@ if opt.blobs:
 if opt.bwlimit:
     client.bwlimit = parse_num(opt.bwlimit)
 if opt.date:
-    try:
-        #TODO make date parsing more robust
-        date = float(opt.date)
-    except ValueError, e:
-        o.fatal('the date doesn\'t seem to be in the right format')
+    date = parse_date_or_fatal(opt.date, o.fatal)
 else:
     date = time.time()
+
 
 is_reverse = os.environ.get('BUP_SERVER_REVERSE')
 if is_reverse and opt.remote:

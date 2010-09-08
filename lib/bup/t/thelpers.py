@@ -22,3 +22,9 @@ def test_strip_path():
     WVPASSEQ(strip_path(empty_prefix, path), path)
     WVPASSEQ(strip_path(non_matching_prefix, path), path)
     WVEXCEPT(Exception, strip_path, None, path)
+
+@wvtest
+def test_strip_base_path():
+    path = "/var/backup/daily.0/localhost/etc/"
+    base_paths = ["/var", "/var/backup", "/var/backup/daily.0/localhost"]
+    WVPASSEQ(strip_base_path(path, base_paths), '/etc')

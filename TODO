@@ -1,6 +1,6 @@
 X Make strip option more strict
 X rename strip option to strip-path
-* add strip option that determines the path by itself
+X add strip option that determines the path by itself
 * refactor date parsing
 * Makefile should symlink *-mcd.sh
 * Add a second parameter <target> to import-rsnapshot-cmd.sh

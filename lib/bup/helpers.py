@@ -405,6 +405,20 @@ def strip_path(prefix, path):
     else:
         return path
 
+def strip_base_path(path, base_paths):
+    """Strips the base path from a given path.
+
+    Determines the base path for the given string and the strips it
+    using strip_path().
+    Iterates over all base_paths from long to short, to prevent that
+    a too short base_path is removed.
+    """
+    sorted_base_paths = sorted(base_paths, key=len, reverse=True)
+    for bp in sorted_base_paths:
+        if path.startswith(bp):
+            return strip_path(bp, path)
+    return path
+
 
 # hashlib is only available in python 2.5 or higher, but the 'sha' module
 # produces a DeprecationWarning in python 2.6 or higher.  We want to support

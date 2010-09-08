@@ -16,6 +16,7 @@ v,verbose  increase log output (can be used more than once)
 q,quiet    don't show progress meter
 smaller=   only back up files smaller than n bytes
 bwlimit=   maximum bytes/sec to transmit to server
+strip      strips the path to every filename given
 strip-path= path-prefix to be stripped when saving
 """
 o = options.Options('bup save', optspec)
@@ -40,6 +41,9 @@ if opt.date:
         o.fatal("invalid date format (should be a float): %r")
 else:
     date = time.time()
+
+if (opt.strip and opt['strip-path']):
+    o.fatal("--strip is incompatible with --strip-path")
 
 is_reverse = os.environ.get('BUP_SERVER_REVERSE')
 if is_reverse and opt.remote:
@@ -198,7 +202,10 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
         continue
 
     assert(dir.startswith('/'))
-    if opt['strip-path']:
+    if opt.strip:
+        stripped_base_path = strip_base_path(dir, extra)
+        dirp = stripped_base_path.split('/')
+    elif opt['strip-path']:
         dirp = strip_path(opt['strip-path'], dir).split('/')
     else:
         dirp = dir.split('/')

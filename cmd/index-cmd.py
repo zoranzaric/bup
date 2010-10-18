@@ -53,11 +53,19 @@ def check_index(reader):
         raise
     log('check: passed.\n')
 
+def wantrecurse(ent):
+    global bup_patterns
+    if os.path.isdir(os.path.realpath(ent.name)):
+        patterns = parse_bupignore(ent.name)
+        if patterns:
+            debug1('Found .bupignore patterns: %r\n' % patterns)
+            bup_patterns.append((ent.name, patterns))
+    return True
 
 def update_index(top, excluded_paths):
     ri = index.Reader(indexfile)
     wi = index.Writer(indexfile)
-    rig = IterHelper(ri.iter(name=top))
+    rig = IterHelper(ri.iter(name=top, wantrecurse=wantrecurse))
     tstart = int(time.time())
 
     hashgen = None
@@ -77,6 +85,9 @@ def update_index(top, excluded_paths):
         elif not (total % 128):
             progress('Indexing: %d\r' % total)
         total += 1
+        if match_bupignorepatterns(path, bup_patterns):
+            rig.cur.set_bupignored()
+            debug1("Added BUP_IGNORED flag: %s\n" % (path))
         while rig.cur and rig.cur.name > path:  # deleted paths
             if rig.cur.exists():
                 rig.cur.set_deleted()
@@ -155,6 +166,8 @@ if opt.check:
     check_index(index.Reader(indexfile))
 
 excluded_paths = drecurse.parse_excludes(flags)
+
+bup_patterns = []
 
 paths = index.reduce_paths(extra)
 

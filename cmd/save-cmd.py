@@ -187,6 +187,9 @@ lastskip_name = None
 lastdir = ''
 for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
     (dir, file) = os.path.split(ent.name)
+    if ent.is_bupignored():
+        log('Is bupignored: %s\n' % ent.name)
+        continue
     exists = (ent.flags & index.IX_EXISTS)
     hashvalid = already_saved(ent)
     wasmissing = ent.sha_missing()

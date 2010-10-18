@@ -73,3 +73,41 @@ def test_graft_path():
     WVPASSEQ(graft_path(all_graft_points, path), "/opt/user")
     WVPASSEQ(graft_path([(matching_full_path, new_path)], path),
                         "/opt")
+
+def test_parse_bupignore():
+    pass
+    tmpdir = os.path.join(os.getcwd(),"test_bupignore.tmp")
+    bupignore = os.path.join(tmpdir, ".bupignore")
+
+    os.mkdir(tmpdir)
+    f = open(bupignore, "w")
+    f.write("a\n")
+    f.write(" foo \n")
+    f.write(" \n")
+    f.close()
+
+    patterns = parse_bupignore(tmpdir)
+    print patterns
+    WVPASSEQ(len(patterns), 2)
+    WVPASSEQ("a" in patterns, True)
+    WVPASSEQ("foo" in patterns, True)
+    WVPASSNE(" foo " in patterns, True)
+
+    os.remove(bupignore)
+    os.rmdir(tmpdir)
+
+@wvtest
+def test_match_bupignorepattern():
+    WVPASSEQ(match_bupignorepattern("/etc/passwd", "passwd"), True)
+    WVPASSEQ(match_bupignorepattern("/etc/passwd", "foo"), False)
+
+@wvtest
+def test_match_bupignorepatterns():
+    pattern_basepath = "/etc/"
+    path = "/etc/passwd"
+    WVPASSEQ(match_bupignorepatterns(path,
+                                     [(pattern_basepath, "passwd")]),
+             True)
+    WVPASSEQ(match_bupignorepatterns(path,
+                                     [(pattern_basepath, "e")]),
+             False)

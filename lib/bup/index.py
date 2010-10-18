@@ -17,6 +17,9 @@ FOOTLEN = struct.calcsize(FOOTER_SIG)
 IX_EXISTS = 0x8000        # file exists on filesystem
 IX_HASHVALID = 0x4000     # the stored sha1 matches the filesystem
 IX_SHAMISSING = 0x2000    # the stored sha1 object doesn't seem to exist
+IX_BUPIGNORED = 0x0200    # the file is ignored by a .bupignore rule
+IX_GITIGNORED = 0x0400    # the file is ignored by a .gitignore rule
+IX_CVSIGNORED = 0x0800    # the file is ignored by a .cvsignore rule
 
 class Error(Exception):
     pass
@@ -158,6 +161,25 @@ class Entry:
 
     def is_fake(self):
         return not self.ctime
+
+    def set_bupignored(self):
+        self.flags |= IX_BUPIGNORED
+
+    def is_bupignored(self):
+        return (self.flags & IX_BUPIGNORED) == IX_BUPIGNORED
+
+    def set_gitignored(self):
+        self.flags |= IX_GITIGNORED
+
+    def is_gitignored(self):
+        return (self.flags & IX_GITIGNORED) == IX_GITIGNORED
+
+    def set_cvsignored(self):
+        self.flags |= IX_CVSIGNORED
+
+    def is_cvsignored(self):
+        return (self.flags & IX_CVSIGNORED) == IX_CVSIGNORED
+
 
     def __cmp__(a, b):
         return (cmp(a.name, b.name)

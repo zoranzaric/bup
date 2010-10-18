@@ -455,6 +455,36 @@ def graft_path(graft_points, path):
             return re.sub(r'^' + old_prefix, new_prefix, normalized_path)
     return normalized_path
 
+def parse_bupignore(d):
+    debug1('Looking dir for bupignore\n')
+    patterns = []
+    bupignore_path = os.path.join(d, '.bupignore')
+    if os.path.exists(bupignore_path):
+        try:
+            f = open(bupignore_path, 'r')
+            lines = f.readlines()
+            empty_line = re.compile("^\s*$")
+            for line in lines:
+                if not empty_line.match(line):
+                    patterns.append(line.strip())
+        except IOError, e:
+            print "Couldn't read %s" % bupignore_path
+            pass
+    return patterns
+
+def match_bupignorepatterns(path, bup_patterns):
+    for pattern_basepath, patterns in bup_patterns:
+        if path.startswith(pattern_basepath):
+            path_to_match = "".join(path.split(pattern_basepath))
+            for pattern in patterns:
+                if match_bupignorepattern(path_to_match, pattern):
+                    return True
+    return False
+
+def match_bupignorepattern(path, pattern):
+    #TODO implement correct pattern matching
+    return path.find(pattern) >= 0
+
 
 # hashlib is only available in python 2.5 or higher, but the 'sha' module
 # produces a DeprecationWarning in python 2.6 or higher.  We want to support

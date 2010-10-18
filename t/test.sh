@@ -396,3 +396,19 @@ WVPASS true
 WVPASS bup import-rsnapshot $D/
 WVPASSEQ "$(bup ls buptest/latest/)" "a/
 c/"
+
+WVSTART "ignore"
+D=ignore.tmp
+export BUP_DIR="$TOP/$D/.bup"
+rm -rf $D
+mkdir $D
+WVPASS bup init
+echo "b" > $D/.bupignore
+touch $D/a
+touch $D/b
+touch $D/c
+WVPASS bup index -ux $D
+WVPASS bup index -ux $D
+bup save --strip -n ignore $D
+WVPASSEQ "$(bup ls ignore/latest/)" "a
+c"

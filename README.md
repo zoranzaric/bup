@@ -294,6 +294,22 @@ mailing list (see below) if you'd like to help.
     will adapt one of them to use bup.
     
     
+excluding and ignoring
+----------------------
+
+bup has two concepts for "not backing up" single files: excluding and ignoring
+
+Excluding is a one time action that is done during the index phase of a backup.
+The index never sees excluded files.  This is helpful when dealing with
+temporary files or directories that shouldn't be backed up.
+
+Ignoring is permanent.  It is very similar to the concept of ignoring in version
+control, where you specify patterns for files or directories that shouldn't be
+under version control.  Ignoring takes place in the index.  During the index
+phase bup parses files that contain ignore patterns and adds a ignore flag to
+the index for objects matching these patterns.
+
+
 More Documentation
 ------------------
 

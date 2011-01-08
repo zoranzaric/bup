@@ -187,9 +187,7 @@ lastskip_name = None
 lastdir = ''
 for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
     (dir, file) = os.path.split(ent.name)
-    if ent.is_bupignored():
-        log('Is bupignored: %s\n' % ent.name)
-        continue
+    ignored = ent.is_bupignored()
     exists = (ent.flags & index.IX_EXISTS)
     hashvalid = already_saved(ent)
     wasmissing = ent.sha_missing()
@@ -202,6 +200,8 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
                 status = 'A'
             else:
                 status = 'M'
+        elif ignored:
+            staus = 'I'
         else:
             status = ' '
         if opt.verbose >= 2:
@@ -214,7 +214,9 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
     if opt.progress:
         progress_report(0)
     fcount += 1
-    
+
+    if ignored:
+        continue
     if not exists:
         continue
     if opt.smaller and ent.size >= opt.smaller:

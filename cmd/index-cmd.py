@@ -186,6 +186,8 @@ if opt['print'] or opt.status or opt.modified:
         if opt.status:
             if ent.is_deleted():
                 line += 'D '
+            elif ent.is_bupignored():
+                line += 'I '
             elif not ent.is_valid():
                 if ent.sha == index.EMPTY_SHA:
                     line += 'A '

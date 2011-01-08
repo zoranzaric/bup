@@ -403,12 +403,17 @@ export BUP_DIR="$TOP/$D/.bup"
 rm -rf $D
 mkdir $D
 WVPASS bup init
-echo "b" > $D/.bupignore
-touch $D/a
-touch $D/b
-touch $D/c
+echo "FOO" > $D/.bupignore
+touch $D/FOO
+touch $D/BAR
+touch $D/BAZ
 WVPASS bup index -ux $D
-WVPASS bup index -ux $D
+WVPASSEQ "$(bup index --check -usx $D)" \
+"I $D/FOO
+A $D/BAZ
+A $D/BAR
+A $D/.bupignore
+A $D/"
 bup save --strip -n ignore $D
-WVPASSEQ "$(bup ls ignore/latest/)" "a
-c"
+WVPASSEQ "$(bup ls ignore/latest/)" "BAR
+BAZ"

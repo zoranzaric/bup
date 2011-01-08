@@ -59,10 +59,10 @@ need the same information).
     Implies `-p`.
 
 -s, --status
-:   prepend a status code (A, M, D, or space) before each
+:   prepend a status code (A, M, D, I, or space) before each
     filename.  Implies `-p`.  The codes mean, respectively,
     that a file is marked in the index as added, modified,
-    deleted, or unchanged since the last backup.
+    deleted, ignored, or unchanged since the last backup.
     
 -H, --hash
 :   for each file printed, prepend the most recently

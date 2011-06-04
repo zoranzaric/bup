@@ -665,3 +665,44 @@ WVSTART "save disjoint top-level directories"
     # For now, assume that "ls -a" and "sort" use the same order.
     WVPASSEQ "$(bup ls -a src/latest)" "$(echo -e "$top_dir/\ntmp/" | sort)"
 ) || WVFAIL
+
+
+# Create a push test tree.
+(
+    rm -rf "$TOP/buppush.tmp/src"
+    mkdir -p "$TOP/buppush.tmp/src"
+    cp -a Documentation cmd lib t "$TOP/buppush.tmp"/src
+) || WVFAIL
+
+WVSTART 'push'
+
+# Create source bupdir
+rm -rf "$TOP/buppush.tmp/src.bup"
+bup -d "$TOP/buppush.tmp/src.bup" init
+
+# Create destination bupdir
+rm -rf "$TOP/buppush.tmp/dst.bup"
+bup -d "$TOP/buppush.tmp/dst.bup" init
+
+# Index and save test tree to source bupdir for the first backup set
+bup -d "$TOP/buppush.tmp/src.bup" index -ux "$TOP/buppush.tmp/src"
+bup -d "$TOP/buppush.tmp/src.bup" save --strip -n push1 "$TOP/buppush.tmp/src"
+
+# Index and save test tree to source bupdir for the second backup set
+bup -d "$TOP/buppush.tmp/src.bup" index -ux "$TOP/buppush.tmp/src"
+bup -d "$TOP/buppush.tmp/src.bup" save --strip -n push2 "$TOP/buppush.tmp/src"
+
+# Push first backup set from source bupdir to destination bupdir
+bup -d "$TOP/buppush.tmp/src.bup" push -r :"$TOP/buppush.tmp/dst.bup" push1
+
+WVPASSEQ "$(bup -d "$TOP/buppush.tmp/src.bup" ls push1/latest/)" \
+         "$(bup -d "$TOP/buppush.tmp/dst.bup" ls push1/latest/)"
+
+# Push all backup sets from source bupdir to destination bupdir
+bup -d "$TOP/buppush.tmp/src.bup" push -r :"$TOP/buppush.tmp/dst.bup" --all
+
+WVPASSEQ "$(bup -d "$TOP/buppush.tmp/src.bup" ls push2/latest/)" \
+         "$(bup -d "$TOP/buppush.tmp/dst.bup" ls push2/latest/)"
+
+WVPASSEQ "$(bup -d "$TOP/buppush.tmp/src.bup" ls)" \
+         "$(bup -d "$TOP/buppush.tmp/dst.bup" ls)"

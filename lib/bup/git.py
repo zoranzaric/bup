@@ -1036,6 +1036,42 @@ class CatPipe:
         except StopIteration:
             log('booger!\n')
 
+    def get_commits(self, refname):
+        return ((date, sha.encode('hex')) for date, sha in rev_list(refname))
+
+    def traverse_commit(self, sha_hex):
+        yield ('commit', sha_hex)
+
+        it = iter(self.get(sha_hex))
+        type = it.next()
+        assert(type == 'commit')
+        tree_sha = "".join(it).split("\n")[0].lstrip("tree ").rstrip(" ")
+        for obj in self.traverse_objects(tree_sha):
+            yield obj
+
+
+    def traverse_objects(self, sha_hex):
+        it = iter(self.get(sha_hex))
+        type = it.next()
+
+        if type == 'commit':
+            yield ('commit', sha_hex)
+
+            tree_sha = "".join(it).split("\n")[0].lstrip("tree ").rstrip(" ")
+
+            for obj in self.traverse_objects(tree_sha):
+                yield obj
+
+        if type == 'tree':
+            for (mode,mangled_name,sha) in tree_decode("".join(it)):
+                yield ('tree', sha_hex)
+
+                for obj in self.traverse_objects(sha.encode('hex')):
+                    yield obj
+
+        elif type == 'blob':
+            yield ('blob', sha_hex)
+
 def tags():
     """Return a dictionary of all tags in the form {hash: [tag_names, ...]}."""
     tags = {}

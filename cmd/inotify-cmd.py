@@ -54,7 +54,6 @@ class EventHandler(pyinotify.ProcessEvent):
     def process_IN_CREATE(self, event):
         if not event.pathname.endswith(".bup.meta"):
             logging.debug("Creating %s" % event.pathname)
-            # TODO new directories should be added to the watchlist
             backup(self.base_path, event.pathname)
 
     def process_IN_DELETE(self, event):

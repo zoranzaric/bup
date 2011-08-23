@@ -2,6 +2,7 @@
 import pyinotify
 import os
 import sys
+import logging
 
 from bup import git, options, index, save, metadata
 
@@ -22,6 +23,11 @@ else:
     name = "inotify"
 
 git.check_repo_or_die()
+bup_dir = git.repo()
+
+logging.basicConfig(filename=os.path.join(bup_dir, 'bup-inotify.log'),
+                    level=logging.DEBUG)
+
 
 wm = pyinotify.WatchManager()
 
@@ -47,20 +53,20 @@ class EventHandler(pyinotify.ProcessEvent):
 
     def process_IN_CREATE(self, event):
         if not event.pathname.endswith(".bup.meta"):
-            print "Creating:", event.pathname
+            logging.debug("Creating %s" % event.pathname)
             # TODO new directories should be added to the watchlist
             backup(self.base_path, event.pathname)
 
     def process_IN_DELETE(self, event):
         if not event.pathname.endswith(".bup.meta"):
-            print "Removing:", event.pathname
+            logging.debug("Removing %s" % event.pathname)
             # if a file or directory is deleted we have to index and save its
             # parent
             backup(self.base_path, os.path.join(event.pathname, os.path.pardir))
 
     def process_IN_MODIFY(self, event):
         if not event.pathname.endswith(".bup.meta"):
-            print "Modifying:", event.pathname
+            logging.debug("Modifying %s" % event.pathname)
             backup(self.base_path, event.pathname)
 
 if len(extra) != 1:
@@ -71,6 +77,7 @@ handler = EventHandler(base_path)
 notifier = pyinotify.Notifier(wm, handler, timeout=10)
 wm.add_watch(base_path, mask, rec=True, auto_add=True)
 
+logging.debug("Initial backup")
 backup(base_path, base_path)
 
 notifier.loop()

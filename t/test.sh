@@ -893,3 +893,50 @@ $D/
 ./sub
 ./sub/foo"
 ) || WVFAIL
+
+
+WVSTART 'gc'
+D=gc.tmp
+export BUP_DIR="$TOP/$D/.bup"
+rm -rf $D
+mkdir $D
+dd if=/dev/urandom of=$D/gc-file bs=1M count=10
+bup init
+
+# Index and save test tree to source bupdir
+bup index -ux "$D"
+bup save -n gc "$D"
+bup tag foo gc
+
+sleep 3
+
+bup index -ux "$D"
+bup save -n gc "$D"
+
+WVPASS bup gc -f
+
+bup index -ux "$D"
+bup save -n gc "$D"
+
+WVPASS bup gc -f
+WVPASS bup fsck
+
+WVPASS bup restore gc/latest$TOP/$D/gc-file -C $D/out
+WVPASS diff $D/gc-file $D/out/gc-file
+
+bup index -ux "$D"
+bup save -n gc "$D"
+
+WVPASS bup gc -n -f
+
+bup index -ux "$D"
+bup save -n gc "$D"
+if bup fsck --par2-ok; then
+    bup fsck -g
+
+    WVPASS bup gc -f
+
+    WVPASSEQ $(bup ls gc/ | wc -l) "7"
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
+fi
+

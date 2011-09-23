@@ -49,6 +49,7 @@ if len(tags) > 0:
 
 pl = git.PackIdxList(git.repo('objects/pack'))
 
+blob_writer = git.PackWriter(compression_level=opt.compress)
 w = git.PackWriter(compression_level=opt.compress)
 
 written_shas = set()
@@ -60,7 +61,10 @@ for pack in pl.packs:
                 it = iter(cp.get(sha.encode('hex')))
                 type = it.next()
                 content = "".join(it)
-                w._write(sha, type, content)
+                if type == 'blob':
+                    blob_writer._write(sha, type, content)
+                else:
+                    w._write(sha, type, content)
                 log('.')
                 written_shas.add(sha)
             else:

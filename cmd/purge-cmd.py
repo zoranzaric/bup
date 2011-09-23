@@ -3,6 +3,36 @@ import sys, os
 from bup import git, options
 from bup.helpers import *
 
+class Db():
+    def __init__(self):
+        import sqlite3
+        if os.path.isfile(os.path.expanduser('~/.bup/gc.sqlite')):
+            os.unlink(os.path.expanduser('~/.bup/gc.sqlite'))
+        self.con = sqlite3.connect(os.path.expanduser('~/.bup/gc.sqlite'))
+        sql = "CREATE TABLE needed_shas (sha string)"
+        self.con.execute(sql);
+
+    def __iter__(self):
+        sql = "SELECT sha FROM needed_shas;"
+        cursor = self.con.execute(sql)
+        for (sha,) in cursor:
+            yield str(sha).decode('hex')
+
+    def __contains__(self, sha):
+        sql = "SELECT * FROM needed_shas WHERE sha IN(?);"
+        cursor = self.con.execute(sql, (sha.encode('hex'),))
+        try:
+            cursor.next()
+            return True
+        except StopIteration:
+            return False
+
+    def add(self, sha):
+        if sha not in self:
+            sql = "INSERT INTO needed_shas VALUES (?);"
+            self.con.execute(sql, (sha.encode('hex'),))
+            self.con.commit()
+
 
 optspec = """
 bup purge [-f] [-n]

@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+import sys, os
+from bup import git, options
+from bup.helpers import *
+
+
+optspec = """
+bup purge [-f] [-n]
+--
+f,force    don't ask, just do it
+n,name=    name of backup set to purge from (if any specific)
+d,dry-run  don't do anything, just print what would be done
+c,commit   purge a specific commit
+#,compress=  set compression level to # (0-9, 9 is highest) [1]
+"""
+o = options.Options(optspec)
+(opt, flags, extra) = o.parse(sys.argv[1:])
+
+git.check_repo_or_die()
+
+handle_ctrl_c()
+
+cp = git.CatPipe()
+
+if opt.name:
+    refnames = ['refs/heads/%s' % opt.name]
+else:
+    refs = git.list_refs()
+    refnames = [name for name, sha in refs]
+
+needed_shas = set()
+
+# Find needed objects reachable from commits
+for refname in refnames:
+    if not refname.startswith('refs/heads/'):
+        continue
+    for date, sha in cp.get_commits(refname):
+        # TODO Add date based filtering
+        for type, sha_ in cp.traverse_commit(sha):
+            needed_shas.add(sha_.decode('hex'))
+
+# Find needed objects reachable from tags
+tags = git.tags()
+if len(tags) > 0:
+    for key in tags:
+        for type, sha in cp.traverse_commit(sha):
+            if sha not in needed_shas:
+                needed_shas.add(sha.decode('hex'))
+
+pl = git.PackIdxList(git.repo('objects/pack'))
+
+w = git.PackWriter(compression_level=opt.compress)
+
+written_shas = set()
+duplicates = []
+for pack in pl.packs:
+    for offset, sha in pack.hashes_sorted_by_ofs():
+        if sha in needed_shas:
+            if not sha in written_shas:
+                it = iter(cp.get(sha.encode('hex')))
+                type = it.next()
+                content = "".join(it)
+                w._write(sha, type, content)
+                log('.')
+                written_shas.add(sha)
+            else:
+                duplicates.append(sha.encode('hex'))
+    os.unlink(pack.name)
+    os.unlink(pack.name[:-3] + "pack")
+
+w.close()
+
+log("\n")
+print "Number of written objects: ", len(written_shas)
+print "Duplicates: ", duplicates
+

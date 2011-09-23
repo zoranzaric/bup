@@ -467,3 +467,47 @@ WVPASSEQ "$(bup ls compression/latest/ | sort)" "$(ls $TOP/Documentation | sort)
 COMPRESSION_9_SIZE=$(du -s $D | cut -f1)
 
 WVPASS [ "$COMPRESSION_9_SIZE" -lt "$COMPRESSION_0_SIZE" ]
+
+WVSTART 'repack'
+D=repack.tmp
+export BUP_DIR="$TOP/$D/.bup"
+rm -rf $D
+mkdir $D
+dd if=/dev/urandom of=$D/repack-file bs=1M count=10
+bup init
+
+# Index and save test tree to source bupdir
+bup index -ux "$D"
+bup save -n repack "$D"
+bup tag foo repack
+
+sleep 3
+
+bup index -ux "$D"
+bup save -n repack "$D"
+
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(bup ls repack/ | wc -l) "4"
+WVPASS bup repack
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(bup ls repack/ | wc -l) "4"
+
+WVPASS bup repack
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(bup ls repack/ | wc -l) "4"
+
+bup index -ux "$D"
+bup save -n repack "$D"
+
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(bup ls repack/ | wc -l) "5"
+WVPASS bup repack
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(bup ls repack/ | wc -l) "5"
+WVPASS bup fsck
+
+WVPASS bup restore repack/latest$TOP/$D/repack-file -C $D/out
+WVPASS diff $D/repack-file $D/out/repack-file
+
+rm -rf $D
+

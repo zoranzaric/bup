@@ -38,10 +38,14 @@ class BitArray():
         self._data = 0
 
     def add(self, i):
-        self._data = self._data | (1 << i)
+        if i != None:
+            self._data = self._data | (1 << i)
 
     def __contains__(self, i):
-        return ((self._data & (1 << i)) >> i) == 1
+        if i != None:
+            return ((self._data & (1 << i)) >> i) == 1
+        else:
+            return False
 
 
 optspec = """

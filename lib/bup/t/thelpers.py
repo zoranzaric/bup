@@ -85,3 +85,12 @@ def test_graft_path():
     WVPASSEQ(graft_path(all_graft_points, path), "/opt/user")
     WVPASSEQ(graft_path([(matching_full_path, new_path)], path),
                         "/opt")
+
+@wvtest
+def test_bit_array():
+    ba = BitArray(10)
+    WVPASSEQ((10 in ba), False)
+    ba.add(10)
+    WVPASSEQ((10 in ba), True)
+    ba.remove(10)
+    WVPASSEQ((10 in ba), False)

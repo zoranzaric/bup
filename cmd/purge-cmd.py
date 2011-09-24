@@ -72,7 +72,12 @@ else:
     refs = git.list_refs()
     refnames = [name for name, sha in refs]
 
-needed_shas = set()
+pl = git.PackIdxList(git.repo('objects/pack'))
+
+pack_bitarrays = dict()
+for pack in pl.packs:
+    pack_bitarrays[pack.name] = BitArray()
+
 
 # Find needed objects reachable from commits
 for refname in refnames:
@@ -81,17 +86,18 @@ for refname in refnames:
     for date, sha in cp.get_commits(refname):
         # TODO Add date based filtering
         for type, sha_ in cp.traverse_commit(sha):
-            needed_shas.add(sha_.decode('hex'))
+            for pack in pl.packs:
+                idx = pack._idx_from_hash(sha_.decode('hex'))
+                pack_bitarrays[pack.name].add(idx)
 
 # Find needed objects reachable from tags
 tags = git.tags()
 if len(tags) > 0:
     for key in tags:
         for type, sha in cp.traverse_commit(sha):
-            if sha not in needed_shas:
-                needed_shas.add(sha.decode('hex'))
-
-pl = git.PackIdxList(git.repo('objects/pack'))
+            for pack in pl.packs:
+                idx = pack._idx_from_hash(sha_.decode('hex'))
+                pack_bitarrays[pack.name].add(idx)
 
 blob_writer = git.PackWriter(compression_level=opt.compress)
 w = git.PackWriter(compression_level=opt.compress)
@@ -99,8 +105,10 @@ w = git.PackWriter(compression_level=opt.compress)
 written_shas = set()
 duplicates = []
 for pack in pl.packs:
+    ba = pack_bitarrays[pack.name]
     for offset, sha in pack.hashes_sorted_by_ofs():
-        if sha in needed_shas:
+        idx = pack._idx_from_hash(sha)
+        if idx in ba:
             if not sha in written_shas:
                 it = iter(cp.get(sha.encode('hex')))
                 type = it.next()

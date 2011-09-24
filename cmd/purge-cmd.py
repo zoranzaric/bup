@@ -33,6 +33,16 @@ class Db():
             self.con.execute(sql, (sha.encode('hex'),))
             self.con.commit()
 
+class BitArray():
+    def __init__(self):
+        self._data = 0
+
+    def add(self, i):
+        self._data = self._data | (1 << i)
+
+    def __contains__(self, i):
+        return ((self._data & (1 << i)) >> i) == 1
+
 
 optspec = """
 bup purge [-f] [-n]

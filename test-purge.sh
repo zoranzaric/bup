@@ -36,6 +36,6 @@ bup -d "$TOP/buppurge.tmp/.bup" save --strip -n purge "$TOP/buppurge.tmp/src"
 WVPASSEQ $(ls "$TOP/buppurge.tmp/.bup/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup -d "$TOP/buppurge.tmp/.bup" ls purge/ | wc -l) "4"
 bup -d "$TOP/buppurge.tmp/.bup" purge
-WVPASSEQ $(ls "$TOP/buppurge.tmp/.bup/objects/pack" | grep "pack$" | wc -l) "1"
+WVPASSEQ $(ls "$TOP/buppurge.tmp/.bup/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup -d "$TOP/buppurge.tmp/.bup" ls purge/ | wc -l) "4"
 

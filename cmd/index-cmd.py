@@ -157,10 +157,13 @@ if opt.check:
 
 excluded_paths = drecurse.parse_excludes(flags)
 
-paths = index.reduce_paths(extra)
+if extra:
+    paths = index.reduce_paths(extra)
+else:
+    paths = index.reduce_paths(path.strip() for path in sys.stdin)
 
 if opt.update:
-    if not extra:
+    if not paths:
         o.fatal('update mode (-u) requested but no paths given')
     for (rp,path) in paths:
         update_index(rp, excluded_paths)

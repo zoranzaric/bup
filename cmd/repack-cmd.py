@@ -22,6 +22,11 @@ class NeededObjects():
             idx = pack._idx_from_hash(sha.decode('hex'))
             self.pack_bitarrays[pack.name].add(idx)
 
+    def remove(self, sha):
+        for pack in self.pack_idx_list.packs:
+            idx = pack._idx_from_hash(sha.decode('hex'))
+            self.pack_bitarrays[pack.name].remove(idx)
+
     def get_bitarray_for_pack(self, name):
         if name in self.pack_bitarrays:
             return self.pack_bitarrays[name]

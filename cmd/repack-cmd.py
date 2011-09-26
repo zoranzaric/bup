@@ -121,24 +121,22 @@ blob_writer = git.PackWriter(compression_level=opt.compress)
 w = git.PackWriter(compression_level=opt.compress)
 
 log('Writing new packfiles...\n')
-written_shas = set()
 written_object_counter = 0
 for pack in pl.packs:
     ba = needed_objects.get_bitarray_for_pack(pack.name)
     for offset, sha in pack.hashes_sorted_by_ofs():
         idx = pack._idx_from_hash(sha)
         if idx in ba:
-            if not sha in written_shas:
-                it = iter(cp.get(sha.encode('hex')))
-                type = it.next()
-                content = "".join(it)
-                if type == 'blob':
-                    blob_writer._write(sha, type, content)
-                else:
-                    w._write(sha, type, content)
-                written_shas.add(sha)
-                written_object_counter += 1
-                qprogress('Writing objects: %d\r' % written_object_counter)
+            it = iter(cp.get(sha.encode('hex')))
+            type = it.next()
+            content = "".join(it)
+            if type == 'blob':
+                blob_writer._write(sha, type, content)
+            else:
+                w._write(sha, type, content)
+            needed_objects.remove(sha.encode('hex'))
+            written_object_counter += 1
+            qprogress('Writing objects: %d\r' % written_object_counter)
     os.unlink(pack.name)
     os.unlink(pack.name[:-3] + "pack")
 progress('Writing objects: %d, done.\n' % written_object_counter)

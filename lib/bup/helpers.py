@@ -738,6 +738,10 @@ class BitArray():
         if i != None:
             self._data = self._data | (1 << i)
 
+    def remove(self, i):
+        if i != None and i in self:
+            self._data = self._data ^ (1 << i)
+
     def __contains__(self, i):
         if i != None:
             return ((self._data & (1 << i)) >> i) == 1

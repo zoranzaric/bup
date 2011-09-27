@@ -8,7 +8,7 @@ bup-repack - repack a repository to free up space
 
 # SYNOPSIS
 
-bup repack [-q] [-#]
+bup repack [-n] [-q] [-#]
 
 # DESCRIPTION
 
@@ -23,6 +23,9 @@ use the biggest existing packfile's filesize as additional
 diskspace.
 
 # OPTIONS
+
+-n,--dry-run
+:   don't do anything just print out what would be done
 
 -q, --quiet
 :   disable progress messages.

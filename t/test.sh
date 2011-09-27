@@ -509,5 +509,14 @@ WVPASS bup fsck
 WVPASS bup restore repack/latest$TOP/$D/repack-file -C $D/out
 WVPASS diff $D/repack-file $D/out/repack-file
 
+bup index -ux "$D"
+bup save -n repack "$D"
+
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(bup ls repack/ | wc -l) "6"
+WVPASS bup repack -n
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(bup ls repack/ | wc -l) "6"
+
 rm -rf $D
 

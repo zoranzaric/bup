@@ -76,6 +76,7 @@ optspec = """
 bup repack
 --
 q,quiet    don't show progress meter
+n,dry-run  don't do anything, just print what would be done
 #,compress=  set compression level to # (0-9, 9 is highest) [1]
 """
 o = options.Options(optspec)
@@ -117,8 +118,9 @@ if len(tags) > 0:
             qprogress('Traversing objects: %d\r' % traversed_objects_counter)
 progress('Traversing objects: %d, done.\n' % traversed_objects_counter)
 
-blob_writer = git.PackWriter(compression_level=opt.compress)
-w = git.PackWriter(compression_level=opt.compress)
+if not opt.dry_run:
+    blob_writer = git.PackWriter(compression_level=opt.compress)
+    w = git.PackWriter(compression_level=opt.compress)
 
 log('Writing new packfiles...\n')
 written_object_counter = 0
@@ -130,17 +132,20 @@ for pack in pl.packs:
             it = iter(cp.get(sha.encode('hex')))
             type = it.next()
             content = "".join(it)
-            if type == 'blob':
-                blob_writer._write(sha, type, content)
-            else:
-                w._write(sha, type, content)
+            if not opt.dry_run:
+                if type == 'blob':
+                    blob_writer._write(sha, type, content)
+                else:
+                    w._write(sha, type, content)
             needed_objects.remove(sha.encode('hex'))
             written_object_counter += 1
             qprogress('Writing objects: %d\r' % written_object_counter)
-    os.unlink(pack.name)
-    os.unlink(pack.name[:-3] + "pack")
+    if not opt.dry_run:
+        os.unlink(pack.name)
+        os.unlink(pack.name[:-3] + "pack")
 progress('Writing objects: %d, done.\n' % written_object_counter)
 
-blob_writer.close()
-w.close()
+if not opt.dry_run:
+    blob_writer.close()
+    w.close()
 

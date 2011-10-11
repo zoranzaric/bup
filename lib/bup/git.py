@@ -734,23 +734,33 @@ def rev_list(ref, count=None):
     objects.
     """
     assert(not ref.startswith('-'))
-    opts = []
-    if count:
-        opts += ['-n', str(atoi(count))]
-    argv = ['git', 'rev-list', '--pretty=format:%ct'] + opts + [ref, '--']
-    p = subprocess.Popen(argv, preexec_fn = _gitenv, stdout = subprocess.PIPE)
-    commit = None
-    for row in p.stdout:
-        s = row.strip()
-        if s.startswith('commit '):
-            commit = s[7:].decode('hex')
-        else:
-            date = int(s)
-            yield (date, commit)
-    rv = p.wait()  # not fatal
-    if rv:
-        raise GitError, 'git rev-list returned error %d' % rv
+    sha_hex = rev_parse(ref).encode('hex')
+    cp = CatPipe()
+    c = 0
+    for date, commit in _traverse_commits(cp, sha_hex):
+        yield (date, commit.decode('hex'))
+        c += 1
+        if count and c == count:
+            return
 
+def _traverse_commits(cp, sha_hex):
+    it = iter(cp.get(sha_hex))
+    type = it.next()
+    assert(type == 'commit')
+    content = "".join(it)
+    parents = []
+    date = 0
+    for line in content.split("\n"):
+        if line.startswith('parent '):
+            parents.append(line.split(" ")[1])
+        elif line.startswith('author '):
+            # FIXME this doesn't take the offset into account
+            time, offset = line.split(" ")[-2:]
+            date = float(time)
+    yield date, sha_hex
+    for parent in parents:
+        for d, s in _traverse_commits(cp, parent):
+            yield d, s
 
 def rev_get_date(ref):
     """Get the date of the latest commit on the specified ref."""

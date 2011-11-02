@@ -486,20 +486,20 @@ bup save -n repack "$D"
 WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup ls repack/ | wc -l) "4"
 WVPASS bup repack
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "1"
 WVPASSEQ $(bup ls repack/ | wc -l) "4"
 
 WVPASS bup repack
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "1"
 WVPASSEQ $(bup ls repack/ | wc -l) "4"
 
 bup index -ux "$D"
 bup save -n repack "$D"
 
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup ls repack/ | wc -l) "5"
 WVPASS bup repack
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "1"
 WVPASSEQ $(bup ls repack/ | wc -l) "5"
 WVPASS bup fsck
 
@@ -509,10 +509,10 @@ WVPASS diff $D/repack-file $D/out/repack-file
 bup index -ux "$D"
 bup save -n repack "$D"
 
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup ls repack/ | wc -l) "6"
 WVPASS bup repack -n
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "3"
+WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
 WVPASSEQ $(bup ls repack/ | wc -l) "6"
 
 rm -rf $D

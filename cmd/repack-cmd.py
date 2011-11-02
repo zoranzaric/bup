@@ -126,7 +126,6 @@ if traversed_objects_counter == 0:
 
 
 if not opt.dry_run:
-    blob_writer = git.PackWriter(compression_level=opt.compress)
     w = git.PackWriter(compression_level=opt.compress)
 
 log('Writing new packfiles...\n')
@@ -140,10 +139,7 @@ for pack in needed_objects.packs:
             type = it.next()
             content = "".join(it)
             if not opt.dry_run:
-                if type == 'blob':
-                    blob_writer._write(sha, type, content)
-                else:
-                    w._write(sha, type, content)
+                w._write(sha, type, content)
             needed_objects.remove(sha.encode('hex'))
             written_object_counter += 1
             qprogress('Writing objects: %d\r' % written_object_counter)
@@ -153,6 +149,5 @@ for pack in needed_objects.packs:
 progress('Writing objects: %d, done.\n' % written_object_counter)
 
 if not opt.dry_run:
-    blob_writer.close()
     w.close()
 

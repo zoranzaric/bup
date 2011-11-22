@@ -41,7 +41,7 @@ def traverse_commit(cp, sha_hex, needed_objects):
         it = iter(cp.get(sha_hex))
         type = it.next()
         assert(type == 'commit')
-        tree_sha = "".join(it).split("\n")[0].lstrip("tree ").rstrip(" ")
+        tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
         for obj in traverse_objects(cp, tree_sha, needed_objects):
             yield obj
 
@@ -55,7 +55,7 @@ def traverse_objects(cp, sha_hex, needed_objects):
         if type == 'commit':
             yield ('commit', sha_hex)
 
-            tree_sha = "".join(it).split("\n")[0].lstrip("tree ").rstrip(" ")
+            tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
 
             for obj in traverse_objects(cp, tree_sha, needed_objects):
                 yield obj

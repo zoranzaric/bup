@@ -33,7 +33,10 @@ diskspace.
 -*#*, --compress=*#*
 :   set the compression level to # (a value from 0-9, where
     9 is the highest and 0 is no compression).  The default
-    is 1 (fast, loose compression)
+    is 1 (fast, loose compression).  WARNING: Changing the
+    compression level will change all objects and will result
+    in duplicate objects if the new compression level isn't
+    set on new saves.
 
 
 # EXAMPLE

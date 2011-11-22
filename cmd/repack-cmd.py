@@ -78,7 +78,7 @@ bup repack
 --
 q,quiet    don't show progress meter
 n,dry-run  don't do anything, just print what would be done
-#,compress=  set compression level to # (0-9, 9 is highest) [1]
+#,compress=  set compression level to # (0-9, 9 is highest) [1] (See WARNING in manpage!)
 """
 o = options.Options(optspec)
 (opt, flags, extra) = o.parse(sys.argv[1:])

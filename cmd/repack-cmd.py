@@ -5,25 +5,26 @@ from bup.helpers import *
 
 class NeededObjects():
     def __init__(self, pack_idx_list):
-        self.pack_idx_list = pack_idx_list
+        self.packs = [pack for pack in pack_idx_list.packs
+                               if isinstance(pack, git.PackIdx)]
         self.pack_bitarrays = dict()
-        for pack in self.pack_idx_list.packs:
+        for pack in self.packs:
             self.pack_bitarrays[pack.name] = BitArray()
 
     def __contains__(self, sha):
-        for pack in self.pack_idx_list.packs:
+        for pack in self.packs:
             idx = pack._idx_from_hash(sha.decode('hex'))
             if idx in self.pack_bitarrays[pack.name]:
                 return True
         return False
 
     def add(self, sha):
-        for pack in self.pack_idx_list.packs:
+        for pack in self.packs:
             idx = pack._idx_from_hash(sha.decode('hex'))
             self.pack_bitarrays[pack.name].add(idx)
 
     def remove(self, sha):
-        for pack in self.pack_idx_list.packs:
+        for pack in self.packs:
             idx = pack._idx_from_hash(sha.decode('hex'))
             self.pack_bitarrays[pack.name].remove(idx)
 
@@ -130,7 +131,7 @@ if not opt.dry_run:
 
 log('Writing new packfiles...\n')
 written_object_counter = 0
-for pack in pl.packs:
+for pack in needed_objects.packs:
     ba = needed_objects.get_bitarray_for_pack(pack.name)
     for offset, sha in pack.hashes_sorted_by_ofs():
         idx = pack._idx_from_hash(sha)

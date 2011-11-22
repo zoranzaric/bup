@@ -97,11 +97,12 @@ pl = git.PackIdxList(git.repo('objects/pack'))
 needed_objects = NeededObjects(pl)
 
 # Find needed objects reachable from commits
+traversed_objects_counter = 0
+
 for refname in refnames:
     if not refname.startswith('refs/heads/'):
         continue
     log('Traversing %s to find needed objects...\n' % refname[11:])
-    traversed_objects_counter = 0
     for date, sha in ((date, sha.encode('hex')) for date, sha in
                       git.rev_list(refname)):
         for type, sha_ in traverse_commit(cp, sha, needed_objects):
@@ -117,6 +118,11 @@ if len(tags) > 0:
             traversed_objects_counter += 1
             qprogress('Traversing objects: %d\r' % traversed_objects_counter)
 progress('Traversing objects: %d, done.\n' % traversed_objects_counter)
+
+
+if traversed_objects_counter == 0:
+    o.fatal('No reachable objects found.')
+
 
 if not opt.dry_run:
     blob_writer = git.PackWriter(compression_level=opt.compress)

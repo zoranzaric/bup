@@ -3,6 +3,19 @@ import sys, os
 from bup import git, options
 from bup.helpers import *
 
+def run(argv):
+    # at least in python 2.5, using "stdout=2" or "stdout=sys.stderr" below
+    # doesn't actually work, because subprocess closes fd #2 right before
+    # execing for some reason.  So we work around it by duplicating the fd
+    # first.
+    fd = os.dup(2)  # copy stderr
+    try:
+        p = subprocess.Popen(argv, stdout=fd, close_fds=False)
+        return p.wait()
+    finally:
+        os.close(fd)
+
+
 optspec = """
 bup repack
 --
@@ -62,6 +75,7 @@ if not opt.dry_run:
     w = git.PackWriter(compression_level=opt.compress)
 
 log('Writing new packfiles...\n')
+par2 = False
 written_object_counter = 0
 for pack in needed_objects.packs:
     ba = needed_objects.get_bitarray_for_pack(pack.name)
@@ -82,11 +96,16 @@ for pack in needed_objects.packs:
     if not opt.dry_run:
         os.unlink(pack.name)
         os.unlink(pack.name[:-3] + "pack")
+        if os.path.exists(pack.name[:-3] + "par2"):
+            par2 = True
+            os.unlink(pack.name[:-3] + "par2")
 progress('Writing objects: %d, done.\n' % written_object_counter)
 
 if not opt.dry_run:
     blob_writer.close()
     w.close()
+    if par2:
+        run(['bup', 'fsck', '-g'])
 
 git.unlock()
 

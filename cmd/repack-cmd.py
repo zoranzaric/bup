@@ -23,6 +23,8 @@ opt.progress = (istty2 and not opt.quiet)
 refs = git.list_refs()
 refnames = [name for name, sha in refs]
 
+git.lock()
+
 pl = git.PackIdxList(git.repo('objects/pack'))
 
 needed_objects = git.NeededObjects(pl)
@@ -85,4 +87,6 @@ progress('Writing objects: %d, done.\n' % written_object_counter)
 if not opt.dry_run:
     blob_writer.close()
     w.close()
+
+git.unlock()
 

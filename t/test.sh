@@ -441,6 +441,27 @@ WVPASSEQ "$(bup ls buptest/latest/)" "a/
 c/"
 
 
+if [ "$(which duplicity)" != "" ]; then
+    WVSTART "import-duplicity"
+    D=duplicity.tmp
+    export BUP_DIR="$TOP/$D/.bup"
+    rm -rf $D
+    mkdir $D
+    WVPASS bup init
+    mkdir $D/duplicity
+    OLD_PASSPHRASE=$PASSPHRASE
+    export PASSPHRASE=bup_duplicity_passphrase
+    duplicity $TOP/Documentation file://$D/duplicity
+    bup tick
+    duplicity $TOP/Documentation file://$D/duplicity
+    WVPASS bup import-duplicity file://$D/duplicity import-duplicity
+    WVPASSEQ "$(bup ls import-duplicity/ | wc -l)" "3"
+    WVPASSEQ "$(bup ls import-duplicity/latest/ | sort)" "$(ls $TOP/Documentation | sort)"
+
+    export PASSPHRASE=$OLD_PASSPHRASE
+fi
+
+
 WVSTART "compression"
 D=compression0.tmp
 export BUP_DIR="$TOP/$D/.bup"

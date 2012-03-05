@@ -1085,9 +1085,9 @@ def traverse_objects(cp, sha_hex, needed_objects):
                 yield obj
 
         if type == 'tree':
-            for (mode,mangled_name,sha) in tree_decode("".join(it)):
-                yield ('tree', sha_hex)
+            yield ('tree', sha_hex)
 
+            for (mode,mangled_name,sha) in tree_decode("".join(it)):
                 for obj in traverse_objects(cp, sha.encode('hex'),
                                             needed_objects):
                     yield obj

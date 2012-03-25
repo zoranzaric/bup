@@ -28,6 +28,9 @@ o = options.Options(optspec)
 
 git.check_repo_or_die()
 
+if git.is_locked():
+    o.fatal("the repository is currently locked")
+
 handle_ctrl_c()
 
 cp = git.CatPipe()

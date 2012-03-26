@@ -42,6 +42,7 @@ refnames = [name for name, sha in refs]
 git.lock()
 
 pl = git.PackIdxList(git.repo('objects/pack'))
+total_objects = len(pl)
 
 needed_objects = git.NeededObjects(pl)
 
@@ -56,7 +57,8 @@ for refname in refnames:
                       git.rev_list(refname)):
         for type, sha_ in git.traverse_commit(cp, sha, needed_objects):
             traversed_objects_counter += 1
-            qprogress('Traversing objects: %d\r' % traversed_objects_counter)
+            qprogress('Traversing objects (%d/%d)\r' %
+                      (traversed_objects_counter, total_objects))
 
 # Find needed objects reachable from tags
 tags = git.tags()
@@ -65,8 +67,15 @@ if len(tags) > 0:
         log('Traversing tag %s to find needed objects...\n' % ", ".join(tags[key]))
         for type, sha in git.traverse_commit(cp, sha, needed_objects):
             traversed_objects_counter += 1
-            qprogress('Traversing objects: %d\r' % traversed_objects_counter)
-progress('Traversing objects: %d, done.\n' % traversed_objects_counter)
+            qprogress('Traversing objects (%d/%d)\r' %
+                      (traversed_objects_counter, total_objects))
+skipped_objects = total_objects - traversed_objects_counter
+if skipped_objects == 0:
+    progress('Traversing objects (%d/%d), done.\n' %
+             (traversed_objects_counter, total_objects))
+else:
+    progress('Traversing objects (%d/%d), done. Skipped %d\n' %
+             (traversed_objects_counter, total_objects, skipped_objects))
 
 
 if traversed_objects_counter == 0:

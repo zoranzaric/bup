@@ -537,11 +537,13 @@ WVPASSEQ $(bup ls repack/ | wc -l) "6"
 
 bup index -ux "$D"
 bup save -n repack "$D"
-bup fsck -g
+if bup fsck --par2-ok; then
+    bup fsck -g
 
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "4"
-WVPASSEQ $(bup ls repack/ | wc -l) "7"
-WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "4"
+    WVPASSEQ $(bup ls repack/ | wc -l) "7"
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
+fi
 
 WVSTART 'lock'
 D=lock.tmp

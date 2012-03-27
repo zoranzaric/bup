@@ -801,10 +801,14 @@ def update_ref(refname, newval, oldval):
     if not oldval:
         oldval = ''
     assert(refname.startswith('refs/heads/'))
-    p = subprocess.Popen(['git', 'update-ref', refname,
-                          newval.encode('hex'), oldval.encode('hex')],
-                         preexec_fn = _gitenv)
-    _git_wait('git update-ref', p)
+    if os.path.isfile(repo(refname)): 
+        rfp = open(repo(refname),"r")
+        ref = rfp.read().strip()
+        rfp.close()
+        if not (ref == oldval.encode('hex')): 
+          raise "oldref is broken check archive!"
+    fp = open(repo(refname),"w")
+    fp.write(newval.encode('hex'))
 
 
 def guess_repo(path=None):

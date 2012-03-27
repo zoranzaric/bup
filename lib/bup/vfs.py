@@ -383,8 +383,9 @@ class Dir(Node):
         it = cp().get(self.hash.encode('hex'))
         type = it.next()
         if type == 'commit':
+            tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
             del it
-            it = cp().get(self.hash.encode('hex') + ':')
+            it = cp().get(tree_sha)
             type = it.next()
         assert(type == 'tree')
         for (mode,mangled_name,sha) in git.tree_decode(''.join(it)):

@@ -125,7 +125,7 @@ def calc_hash(type, content, encrypt=False):
     sum = Sha1(header)
     sum.update(content)
     if encrypt:
-        sum.update(crypto.get_hashkey())
+        sum = Sha1(sum.digest()+crypto.get_hashkey())
     return sum.digest()
 
 

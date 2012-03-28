@@ -22,6 +22,7 @@ strip      strips the path to every filename given
 strip-path= path-prefix to be stripped when saving
 graft=     a graft point *old_path*=*new_path* (can be used more than once)
 #,compress=  set compression level to # (0-9, 9 is highest) [1]
+c,encrypt  enable encryption of the repository (requires nacl)
 """
 o = options.Options(optspec)
 (opt, flags, extra) = o.parse(sys.argv[1:])
@@ -31,6 +32,12 @@ if not (opt.tree or opt.commit or opt.name):
     o.fatal("use one or more of -t, -c, -n")
 if not extra:
     o.fatal("no filenames given")
+
+if opt.encrypt:
+    try:
+        import nacl
+    except ImportError:
+        o.fatal("nacl not available")
 
 opt.progress = (istty2 and not opt.quiet)
 opt.smaller = parse_num(opt.smaller or 0)
@@ -75,7 +82,7 @@ if opt.remote or is_reverse:
 else:
     cli = None
     oldref = refname and git.read_ref(refname) or None
-    w = git.PackWriter(compression_level=opt.compress)
+    w = git.PackWriter(compression_level=opt.compress, encrypt=o.encrypt)
 
 handle_ctrl_c()
 

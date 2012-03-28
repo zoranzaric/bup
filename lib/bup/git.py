@@ -119,11 +119,13 @@ def demangle_name(name):
         return (name, BUP_NORMAL)
 
 
-def calc_hash(type, content):
+def calc_hash(type, content, encrypt=False):
     """Calculate some content's hash in the Git fashion."""
     header = '%s %d\0' % (type, len(content))
     sum = Sha1(header)
     sum.update(content)
+    if encrypt:
+        sum.update(crypto.get_hashkey())
     return sum.digest()
 
 
@@ -546,7 +548,7 @@ class PackWriter:
         if verbose:
             log('>')
         if not sha:
-            sha = calc_hash(type, content)
+            sha = calc_hash(type, content, self.encrypt)
         size, crc = self._raw_write(_encode_packobj(type, content,
                                                     self.compression_level),
                                     sha=sha)
@@ -574,7 +576,7 @@ class PackWriter:
 
     def maybe_write(self, type, content):
         """Write an object to the pack file if not present and return its id."""
-        sha = calc_hash(type, content)
+        sha = calc_hash(type, content, self.encrypt)
         if not self.exists(sha):
             if self.encrypt:
                 content = crypto.encrypt_buffer(content)

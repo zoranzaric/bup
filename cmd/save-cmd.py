@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, stat, time, math
-from bup import hashsplit, git, options, index, client
+from bup import hashsplit, git, options, index, client, crypto
 from bup.helpers import *
 from bup.hashsplit import GIT_MODE_TREE, GIT_MODE_FILE, GIT_MODE_SYMLINK
 
@@ -38,6 +38,7 @@ if opt.encrypt:
         import nacl
     except ImportError:
         o.fatal("nacl not available")
+    crypto.get_hashkey()
 
 opt.progress = (istty2 and not opt.quiet)
 opt.smaller = parse_num(opt.smaller or 0)

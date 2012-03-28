@@ -82,7 +82,7 @@ if opt.remote or is_reverse:
 else:
     cli = None
     oldref = refname and git.read_ref(refname) or None
-    w = git.PackWriter(compression_level=opt.compress, encrypt=o.encrypt)
+    w = git.PackWriter(compression_level=opt.compress, encrypt=opt.encrypt)
 
 handle_ctrl_c()
 

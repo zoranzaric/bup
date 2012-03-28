@@ -7,12 +7,14 @@ hashkey = None
 enckey = None
 
 
-def encrypt_buffer(content, key):
+def encrypt_buffer(content):
+    key = getencryptionkey()
     iv  = nacl.randombytes(24)
     content = iv + nacl.crypto_secretbox(str(content), iv, key)
     return buffer(content)
 
-def decrypt_buffer(content, key):
+def decrypt_buffer(content):
+    key = getencryptionkey()
     content = str(content)
     iv = content[:24]
     content = content[24:]

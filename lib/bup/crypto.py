@@ -8,13 +8,13 @@ enckey = None
 
 
 def encrypt_buffer(content):
-    key = getencryptionkey()
+    key = get_encryptionkey()
     iv  = nacl.randombytes(24)
     content = iv + nacl.crypto_secretbox(str(content), iv, key)
     return buffer(content)
 
 def decrypt_buffer(content):
-    key = getencryptionkey()
+    key = get_encryptionkey()
     content = str(content)
     iv = content[:24]
     content = content[24:]
@@ -57,12 +57,12 @@ def ask_passphrase():
     enckey = keys[0]
 
 # two lazy getters
-def getencryptionkey():
+def get_encryptionkey():
     if not enckey:
         ask_passphrase()
     return enckey
 
-def gethashkey():
+def get_hashkey():
     if not hashkey:
         ask_passphrase()
     return hashkey

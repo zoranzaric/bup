@@ -960,6 +960,7 @@ class CatPipe:
         else:
             self.p = self.inprogress = None
             self.get = self._fast_get
+        self.decrypt = decrypt
 
     def _abort(self):
         if self.p:

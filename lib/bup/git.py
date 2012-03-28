@@ -4,7 +4,7 @@ interact with the Git data structures.
 """
 import os, sys, zlib, time, subprocess, struct, stat, re, tempfile, glob
 from bup.helpers import *
-from bup import _helpers, path, midx, bloom, xstat
+from bup import _helpers, crypto, path, midx, bloom, xstat
 
 max_pack_size = 1000*1000*1000  # larger packs will slow down pruning
 max_pack_objects = 200*1000  # cache memory usage is about 83 bytes per object
@@ -493,7 +493,8 @@ def _make_objcache():
 
 class PackWriter:
     """Writes Git objects inside a pack file."""
-    def __init__(self, objcache_maker=_make_objcache, compression_level=1):
+    def __init__(self, objcache_maker=_make_objcache, compression_level=1,
+                 encrypt=False):
         self.count = 0
         self.outbytes = 0
         self.filename = None
@@ -502,6 +503,7 @@ class PackWriter:
         self.objcache_maker = objcache_maker
         self.objcache = None
         self.compression_level = compression_level
+        self.encrypt = encrypt
 
     def __del__(self):
         self.close()
@@ -574,6 +576,8 @@ class PackWriter:
         """Write an object to the pack file if not present and return its id."""
         sha = calc_hash(type, content)
         if not self.exists(sha):
+            if self.encrypt:
+                content = crypto.encrypt_buffer(content)
             self._write(sha, type, content)
             self._require_objcache()
             self.objcache.add(sha)
@@ -723,7 +727,7 @@ def read_ref(refname):
         return None
 
 
-def rev_list(ref, count=None):
+def rev_list(ref, count=None, decrypt=False):
     """Generate a list of reachable commits in reverse chronological order.
 
     This generator walks through commits, from child to parent, that are
@@ -735,7 +739,7 @@ def rev_list(ref, count=None):
     """
     assert(not ref.startswith('-'))
     sha_hex = rev_parse(ref).encode('hex')
-    cp = CatPipe()
+    cp = CatPipe(decrypt)
     c = 0
     for date, commit in _traverse_commits(cp, sha_hex):
         yield (date, commit.decode('hex'))
@@ -944,7 +948,7 @@ class _AbortableIter:
 _ver_warned = 0
 class CatPipe:
     """Link to 'git cat-file' that is used to retrieve blob data."""
-    def __init__(self):
+    def __init__(self, decrypt=False):
         global _ver_warned
         wanted = ('1','5','6')
         if ver() < wanted:
@@ -1002,6 +1006,8 @@ class CatPipe:
         try:
             yield type
             for blob in it:
+                if self.decrypt:
+                    blob = crypto.decrypt_buffer(blob)
                 yield blob
             assert(self.p.stdout.readline() == '\n')
             self.inprogress = None
@@ -1020,6 +1026,7 @@ class CatPipe:
                              stdout=subprocess.PIPE,
                              preexec_fn = _gitenv)
         for blob in chunkyreader(p.stdout):
+            blob = crypto.decrypt_buffer(blob)
             yield blob
         _git_wait('git cat-file', p)
 

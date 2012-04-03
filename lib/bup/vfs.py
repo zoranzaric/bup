@@ -11,11 +11,11 @@ from bup.hashsplit import GIT_MODE_TREE, GIT_MODE_FILE
 EMPTY_SHA='\0'*20
 
 _cp = None
-def cp():
+def cp(decrypt=False):
     """Create a git.CatPipe object or reuse the already existing one."""
     global _cp
     if not _cp:
-        _cp = git.CatPipe()
+        _cp = git.CatPipe(decrypt)
     return _cp
 
 class NodeError(Exception):
@@ -39,44 +39,44 @@ class TooManySymlinks(NodeError):
     pass
 
 
-def _treeget(hash):
-    it = cp().get(hash.encode('hex'))
+def _treeget(hash, decrypt=False):
+    it = cp(decrypt).get(hash.encode('hex'))
     type = it.next()
     assert(type == 'tree')
     return git.tree_decode(''.join(it))
 
 
-def _tree_decode(hash):
+def _tree_decode(hash, decrypt=False):
     tree = [(int(name,16),stat.S_ISDIR(mode),sha)
             for (mode,name,sha)
-            in _treeget(hash)]
+            in _treeget(hash, decrypt)]
     assert(tree == list(sorted(tree)))
     return tree
 
 
-def _chunk_len(hash):
-    return sum(len(b) for b in cp().join(hash.encode('hex')))
+def _chunk_len(hash, decrypt=False):
+    return sum(len(b) for b in cp(decrypt).join(hash.encode('hex')))
 
 
-def _last_chunk_info(hash):
-    tree = _tree_decode(hash)
+def _last_chunk_info(hash, decrypt=False):
+    tree = _tree_decode(hash, decrypt)
     assert(tree)
     (ofs,isdir,sha) = tree[-1]
     if isdir:
-        (subofs, sublen) = _last_chunk_info(sha)
+        (subofs, sublen) = _last_chunk_info(sha, decrypt)
         return (ofs+subofs, sublen)
     else:
-        return (ofs, _chunk_len(sha))
+        return (ofs, _chunk_len(sha, decrypt))
 
 
-def _total_size(hash):
-    (lastofs, lastsize) = _last_chunk_info(hash)
+def _total_size(hash, decrypt=False):
+    (lastofs, lastsize) = _last_chunk_info(hash, decrypt)
     return lastofs + lastsize
 
 
-def _chunkiter(hash, startofs):
+def _chunkiter(hash, startofs, decrypt=False):
     assert(startofs >= 0)
-    tree = _tree_decode(hash)
+    tree = _tree_decode(hash, decrypt)
 
     # skip elements before startofs
     for i in xrange(len(tree)):
@@ -91,20 +91,20 @@ def _chunkiter(hash, startofs):
         if skipmore < 0:
             skipmore = 0
         if isdir:
-            for b in _chunkiter(sha, skipmore):
+            for b in _chunkiter(sha, skipmore, decrypt):
                 yield b
         else:
-            yield ''.join(cp().join(sha.encode('hex')))[skipmore:]
+            yield ''.join(cp(decrypt).join(sha.encode('hex')))[skipmore:]
 
 
 class _ChunkReader:
-    def __init__(self, hash, isdir, startofs):
+    def __init__(self, hash, isdir, startofs, decrypt=False):
         if isdir:
-            self.it = _chunkiter(hash, startofs)
+            self.it = _chunkiter(hash, startofs, decrypt)
             self.blob = None
         else:
             self.it = None
-            self.blob = ''.join(cp().join(hash.encode('hex')))[startofs:]
+            self.blob = ''.join(cp(decrypt).join(hash.encode('hex')))[startofs:]
         self.ofs = startofs
 
     def next(self, size):
@@ -127,12 +127,13 @@ class _ChunkReader:
 
 
 class _FileReader(object):
-    def __init__(self, hash, size, isdir):
+    def __init__(self, hash, size, isdir, decrypt=False):
         self.hash = hash
         self.ofs = 0
         self.size = size
         self.isdir = isdir
         self.reader = None
+        self.decrypt = False
 
     def seek(self, ofs):
         if ofs > self.size:
@@ -149,7 +150,8 @@ class _FileReader(object):
         if count < 0:
             count = self.size - self.ofs
         if not self.reader or self.reader.ofs != self.ofs:
-            self.reader = _ChunkReader(self.hash, self.isdir, self.ofs)
+            self.reader = _ChunkReader(self.hash, self.isdir, self.ofs,
+                                       self.decrypt)
         try:
             buf = self.reader.next(count)
         except:
@@ -164,13 +166,14 @@ class _FileReader(object):
 
 class Node:
     """Base class for file representation."""
-    def __init__(self, parent, name, mode, hash):
+    def __init__(self, parent, name, mode, hash, decrypt=False):
         self.parent = parent
         self.name = name
         self.mode = mode
         self.hash = hash
         self.ctime = self.mtime = self.atime = 0
         self._subs = None
+        self.decrypt = decrypt
 
     def __cmp__(a, b):
         if a is b:
@@ -295,8 +298,8 @@ class Node:
 
 class File(Node):
     """A normal file from bup's repository."""
-    def __init__(self, parent, name, mode, hash, bupmode):
-        Node.__init__(self, parent, name, mode, hash)
+    def __init__(self, parent, name, mode, hash, bupmode, decrypt=False):
+        Node.__init__(self, parent, name, mode, hash, decrypt)
         self.bupmode = bupmode
         self._cached_size = None
         self._filereader = None
@@ -309,7 +312,8 @@ class File(Node):
         # object here so we're not constantly re-seeking.
         if not self._filereader:
             self._filereader = _FileReader(self.hash, self.size(),
-                                           self.bupmode == git.BUP_CHUNKED)
+                                           self.bupmode == git.BUP_CHUNKED,
+                                           self.decrypt)
         self._filereader.seek(0)
         return self._filereader
 
@@ -318,9 +322,9 @@ class File(Node):
         if self._cached_size == None:
             debug1('<<<<File.size() is calculating (for %r)...\n' % self.name)
             if self.bupmode == git.BUP_CHUNKED:
-                self._cached_size = _total_size(self.hash)
+                self._cached_size = _total_size(self.hash, self.decrypt)
             else:
-                self._cached_size = _chunk_len(self.hash)
+                self._cached_size = _chunk_len(self.hash, self.decrypt)
             debug1('<<<<File.size() done.\n')
         return self._cached_size
 
@@ -328,8 +332,8 @@ class File(Node):
 _symrefs = 0
 class Symlink(File):
     """A symbolic link from bup's repository."""
-    def __init__(self, parent, name, hash, bupmode):
-        File.__init__(self, parent, name, 0120000, hash, bupmode)
+    def __init__(self, parent, name, hash, bupmode, decrypt=False):
+        File.__init__(self, parent, name, 0120000, hash, bupmode, decrypt)
 
     def size(self):
         """Get the file size of the file at which this link points."""
@@ -337,7 +341,7 @@ class Symlink(File):
 
     def readlink(self):
         """Get the path that this link points at."""
-        return ''.join(cp().join(self.hash.encode('hex')))
+        return ''.join(cp(self.decrypt).join(self.hash.encode('hex')))
 
     def dereference(self):
         """Get the node that this link points at.
@@ -367,8 +371,8 @@ class Symlink(File):
 
 class FakeSymlink(Symlink):
     """A symlink that is not stored in the bup repository."""
-    def __init__(self, parent, name, toname):
-        Symlink.__init__(self, parent, name, EMPTY_SHA, git.BUP_NORMAL)
+    def __init__(self, parent, name, toname, decrypt=False):
+        Symlink.__init__(self, parent, name, EMPTY_SHA, git.BUP_NORMAL, decrypt)
         self.toname = toname
 
     def readlink(self):
@@ -378,14 +382,17 @@ class FakeSymlink(Symlink):
 
 class Dir(Node):
     """A directory stored inside of bup's repository."""
+    def __init__(self, decrypt=False):
+        self.decrypt = decrypt
+
     def _mksubs(self):
         self._subs = {}
-        it = cp().get(self.hash.encode('hex'))
+        it = cp(self.decryt).get(self.hash.encode('hex'))
         type = it.next()
         if type == 'commit':
             tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
             del it
-            it = cp().get(tree_sha)
+            it = cp(self.decryt).get(tree_sha)
             type = it.next()
         assert(type == 'tree')
         for (mode,mangled_name,sha) in git.tree_decode(''.join(it)):
@@ -394,11 +401,13 @@ class Dir(Node):
             if bupmode == git.BUP_CHUNKED:
                 mode = GIT_MODE_FILE
             if stat.S_ISDIR(mode):
-                self._subs[name] = Dir(self, name, mode, sha)
+                self._subs[name] = Dir(self, name, mode, sha, self.decrypt)
             elif stat.S_ISLNK(mode):
-                self._subs[name] = Symlink(self, name, sha, bupmode)
+                self._subs[name] = Symlink(self, name, sha, bupmode,
+                                           self.decrypt)
             else:
-                self._subs[name] = File(self, name, mode, sha, bupmode)
+                self._subs[name] = File(self, name, mode, sha, bupmode,
+                                        self.decrypt)
 
 
 class CommitDir(Node):
@@ -411,8 +420,8 @@ class CommitDir(Node):
     separation helps us avoid having too much directories on the same level as
     the number of commits grows big.
     """
-    def __init__(self, parent, name):
-        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA)
+    def __init__(self, parent, name, decrypt=False):
+        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA, decrypt)
 
     def _mksubs(self):
         self._subs = {}
@@ -427,7 +436,7 @@ class CommitDir(Node):
                 dirname = commithex[2:]
                 n1 = self._subs.get(containername)
                 if not n1:
-                    n1 = CommitList(self, containername)
+                    n1 = CommitList(self, containername, self.decrypt)
                     self._subs[containername] = n1
 
                 if n1.commits.get(dirname):
@@ -439,22 +448,22 @@ class CommitDir(Node):
 
 class CommitList(Node):
     """A list of commits with hashes that start with the current node's name."""
-    def __init__(self, parent, name):
-        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA)
+    def __init__(self, parent, name, decrypt=False):
+        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA, decrypt)
         self.commits = {}
 
     def _mksubs(self):
         self._subs = {}
         for (name, (hash, date)) in self.commits.items():
-            n1 = Dir(self, name, GIT_MODE_TREE, hash)
+            n1 = Dir(self, name, GIT_MODE_TREE, hash, self.decrypt)
             n1.ctime = n1.mtime = date
             self._subs[name] = n1
 
 
 class TagDir(Node):
     """A directory that contains all tags in the repository."""
-    def __init__(self, parent, name):
-        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA)
+    def __init__(self, parent, name, decrypt=False):
+        Node.__init__(self, parent, name, GIT_MODE_TREE, EMPTY_SHA, decrypt)
 
     def _mksubs(self):
         self._subs = {}
@@ -464,7 +473,7 @@ class TagDir(Node):
                 date = git.rev_get_date(sha.encode('hex'))
                 commithex = sha.encode('hex')
                 target = '../.commit/%s/%s' % (commithex[:2], commithex[2:])
-                tag1 = FakeSymlink(self, name, target)
+                tag1 = FakeSymlink(self, name, target, self.decrypt)
                 tag1.ctime = tag1.mtime = date
                 self._subs[name] = tag1
 
@@ -475,8 +484,8 @@ class BranchList(Node):
     Represents each commit as a symlink that points to the commit directory in
     /.commit/??/ . The symlink is named after the commit date.
     """
-    def __init__(self, parent, name, hash):
-        Node.__init__(self, parent, name, GIT_MODE_TREE, hash)
+    def __init__(self, parent, name, hash, decrypt=False):
+        Node.__init__(self, parent, name, GIT_MODE_TREE, hash, decrypt)
 
     def _mksubs(self):
         self._subs = {}
@@ -489,12 +498,12 @@ class BranchList(Node):
             ls = time.strftime('%Y-%m-%d-%H%M%S', l)
             commithex = commit.encode('hex')
             target = '../.commit/%s/%s' % (commithex[:2], commithex[2:])
-            n1 = FakeSymlink(self, ls, target)
+            n1 = FakeSymlink(self, ls, target, self.decrypt)
             n1.ctime = n1.mtime = date
             self._subs[ls] = n1
 
             for tag in tags.get(commit, []):
-                t1 = FakeSymlink(self, tag, target)
+                t1 = FakeSymlink(self, tag, target, self.decrypt)
                 t1.ctime = t1.mtime = date
                 self._subs[tag] = t1
 
@@ -503,7 +512,7 @@ class BranchList(Node):
             (date, commit) = latest
             commithex = commit.encode('hex')
             target = '../.commit/%s/%s' % (commithex[:2], commithex[2:])
-            n1 = FakeSymlink(self, 'latest', target)
+            n1 = FakeSymlink(self, 'latest', target, self.decrypt)
             n1.ctime = n1.mtime = date
             self._subs['latest'] = n1
 
@@ -517,22 +526,22 @@ class RefList(Node):
     Also, a special sub-node named '.commit' contains all commit directories
     that are reachable via a ref (e.g. a branch).  See CommitDir for details.
     """
-    def __init__(self, parent):
-        Node.__init__(self, parent, '/', GIT_MODE_TREE, EMPTY_SHA)
+    def __init__(self, parent, decrypt=False):
+        Node.__init__(self, parent, '/', GIT_MODE_TREE, EMPTY_SHA, decrypt)
 
     def _mksubs(self):
         self._subs = {}
 
-        commit_dir = CommitDir(self, '.commit')
+        commit_dir = CommitDir(self, '.commit', self.decrypt)
         self._subs['.commit'] = commit_dir
 
-        tag_dir = TagDir(self, '.tag')
+        tag_dir = TagDir(self, '.tag', self.decrypt)
         self._subs['.tag'] = tag_dir
 
         for (name,sha) in git.list_refs():
             if name.startswith('refs/heads/'):
                 name = name[11:]
                 date = git.rev_get_date(sha.encode('hex'))
-                n1 = BranchList(self, name, sha)
+                n1 = BranchList(self, name, sha, self.decrypt)
                 n1.ctime = n1.mtime = date
                 self._subs[name] = n1

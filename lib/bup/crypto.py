@@ -2,6 +2,9 @@ import nacl
 import hashlib
 import getpass
 import sys
+import termios
+import os
+import git
 
 hashkey = None
 enckey = None
@@ -42,19 +45,38 @@ def kdf(passphrase, salt):
     return [sha256("0" + U), sha256("1" + U)]
 
 
+def check_key(key):
+    hashedkey = sha256(key)
+    fp = open(git.repo()+".hashkeyhash")
+    storedhashedkey = fp.read()
+    return hashedkey == storedhashedkey
+
+
 def ask_passphrase():
     global enckey
     global hashkey
+    git.check_repo_or_die()
     pw1 = "pw1"
     pw2 = "pw2"
-    while pw1 != pw2:
-        pw1 = getpass.getpass("Enter Passphrase:")
-        pw2 = getpass.getpass("Repeat Passphrase:")
-        if (pw1 != pw2):
-            sys.stderr.write("Passphrases did not match!\n")
-    keys = kdf(pw1, "bupsalt") # TODO: get salt from salt file in repository
-    hashkey = keys[0]
-    enckey = keys[0]
+    if os.path.exists(git.repo()+".hashkeyhash"):
+        pw1 = getpass.getpass("Enter Passphrase:\n")
+        keys = kdf(pw1, "bupsalt")
+        if not check_key(keys[0]):
+            sys.stderr.write("Passphrase is not correct!\n")
+            sys.exit(1)
+        hashkey = keys[0]
+        enckey = keys[1]
+    else:
+        while pw1 != pw2:
+            pw1 = getpass.getpass("Enter Passphrase:\n")
+            pw2 = getpass.getpass("Repeat Passphrase:\n")
+            if (pw1 != pw2):
+                sys.stderr.write("Passphrases did not match!\n")
+        keys = kdf(pw1, "bupsalt") # TODO: get salt from salt file in repository
+        hashkey = keys[0]
+        enckey = keys[1]
+        fp = open(git.repo()+".hashkeyhash","w")
+        fp.write(sha256(hashkey))
 
 # two lazy getters
 def get_encryptionkey():

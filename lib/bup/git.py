@@ -958,10 +958,10 @@ class CatPipe:
                 log('warning: git version < %s; bup will be slow.\n'
                     % '.'.join(wanted))
                 _ver_warned = 1
-            self.get = self._slow_get
+            self.get = self._fast_get
         else:
             self.p = self.inprogress = None
-            self.get = self._fast_get
+            self.get = self._slow_get
         self.decrypt = decrypt
 
     def _abort(self):
@@ -996,9 +996,10 @@ class CatPipe:
         self.p.stdin.write('%s\n' % id)
         self.p.stdin.flush()
         hdr = self.p.stdout.readline()
+        print id
         if hdr.endswith(' missing\n'):
             self.inprogress = None
-            raise KeyError('blob %r is missing' % id)
+            raise KeyError('blob %r is missing(crypto: %s)' % (id,self.decrypt))
         spl = hdr.split(' ')
         if len(spl) != 3 or len(spl[0]) != 40:
             raise GitError('expected blob, got %r' % spl)
@@ -1047,6 +1048,8 @@ class CatPipe:
             treeline = ''.join(it).split('\n')[0]
             assert(treeline.startswith('tree '))
             for blob in self.join(treeline[5:]):
+                if self.decrypt:
+                    blob = crypto.decrypt_buffer(blob)
                 yield blob
         else:
             raise GitError('invalid object type %r: expected blob/tree/commit'

@@ -112,6 +112,9 @@ for pack in needed_objects.packs:
         if os.path.exists(pack.name[:-3] + "par2"):
             par2 = True
             os.unlink(pack.name[:-3] + "par2")
+        if os.path.exists(pack.name[:-3] + "vol000+200.par2"):
+            par2 = True
+            os.unlink(pack.name[:-3] + "vol000+200.par2")
 progress('Writing objects: %d, done.\n' % written_object_counter)
 
 if not opt.dry_run:

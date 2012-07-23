@@ -540,3 +540,14 @@ bup index -ux $D
 touch $BUP_DIR/buplock
 WVPASSEQ "$(bup save -n foo $D 2>&1 | tail -n 1)" "error: the repository is currently locked"
 WVPASSEQ "$(bup repack 2>&1 | tail -n 1)" "error: the repository is currently locked"
+
+WVSTART 'unlock-empty'
+D=unlock.tmp
+export BUP_DIR="$TOP/$D/.bup"
+rm -rf $D
+mkdir $D
+bup init
+
+WVPASSEQ "$(bup repack 2>&1 | tail -n 1)" "error: No reachable objects found."
+WVPASSEQ $(ls "$BUP_DIR/buplock" | wc -l) "0"
+WVPASSNE "$(bup repack 2>&1 | tail -n 1)" "error: the repository is currently locked"

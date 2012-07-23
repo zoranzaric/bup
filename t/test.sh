@@ -526,6 +526,13 @@ if bup fsck --par2-ok; then
     WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "4"
     WVPASSEQ $(bup ls repack/ | wc -l) "7"
     WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
+
+    WVPASS bup repack
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) "2"
+    # One .par2 control-file per pack
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
+    # One par2-volume file per pack
+    WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep "vol" | wc -l)
 fi
 
 WVSTART 'lock'

@@ -939,7 +939,7 @@ if bup fsck --par2-ok; then
     WVPASSEQ $(bup ls gc/ | wc -l) "7"
     WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
 
-    WVPASS bup repack -f
+    WVPASS bup gc -f
     # One .par2 control-file per pack
     WVPASSEQ $(ls "$BUP_DIR/objects/pack" | grep "pack$" | wc -l) $(ls "$BUP_DIR/objects/pack" | grep "par2$" | grep -v "vol" | wc -l)
     # One par2-volume file per pack

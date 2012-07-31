@@ -126,3 +126,7 @@ if not opt.dry_run:
 
 git.unlock()
 
+# If there are any *.midx-files, they are obsolete now (they reference deleted *.idx-files)
+import glob
+for midx in glob.glob(os.path.join(git.repo('objects/pack'), 'midx-*.midx')):
+        unlink(midx)

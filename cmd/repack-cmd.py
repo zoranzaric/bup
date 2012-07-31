@@ -122,7 +122,7 @@ if not opt.dry_run:
     blob_writer.close()
     w.close()
     if par2:
-        run(['bup', 'fsck', '-g'])
+        run([os.environ['BUP_MAIN_EXE'], 'fsck', '-g'])
 
 git.unlock()
 

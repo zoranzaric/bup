@@ -22,6 +22,7 @@ bup repack
 q,quiet    don't show progress meter
 v,verbose  increase log output (can be used more than once)
 n,dry-run  don't do anything, just print what would be done
+f,force    ignore the space check
 #,compress=  set compression level to # (0-9, 9 is highest) [1] (See WARNING in manpage!)
 """
 o = options.Options(optspec)
@@ -33,6 +34,12 @@ if git.is_locked():
     o.fatal("the repository is currently locked")
 
 handle_ctrl_c()
+
+# this only works on unix
+vfs_stats = os.statvfs(git.repo())
+free_space = vfs_stats.f_bsize * vfs_stats.f_bavail
+if not opt.force and free_space < git.max_pack_size * 2:
+    o.fatal("insufficent space")
 
 cp = git.CatPipe()
 

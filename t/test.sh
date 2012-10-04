@@ -898,6 +898,7 @@ $D/
 WVSTART 'gc'
 D=gc.tmp
 export BUP_DIR="$TOP/$D/.bup"
+export GIT_DIR="$TOP/$D/.bup"
 rm -rf $D
 mkdir $D
 dd if=/dev/urandom of=$D/gc-file bs=1M count=10
@@ -947,6 +948,7 @@ if bup fsck --par2-ok; then
 fi
 bup save -n gc "$D"
 bup save -n gc "$D"
+WVPASSEQ "$(git fsck --unreachable)" ""
 # Force create a midx-file
 bup midx -f
 WVPASS bup gc -f

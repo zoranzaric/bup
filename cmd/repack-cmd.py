@@ -20,6 +20,7 @@ optspec = """
 bup repack
 --
 q,quiet    don't show progress meter
+v,verbose  increase log output (can be used more than once)
 n,dry-run  don't do anything, just print what would be done
 #,compress=  set compression level to # (0-9, 9 is highest) [1] (See WARNING in manpage!)
 """
@@ -100,6 +101,8 @@ for pack in needed_objects.packs:
             type = it.next()
             content = "".join(it)
             if not opt.dry_run:
+                if opt.verbose:
+                    print "writing %s %s" % (sha.encode('hex'), type)
                 if type == 'blob':
                     blob_writer._write(sha, type, content)
                 else:
@@ -107,6 +110,11 @@ for pack in needed_objects.packs:
             needed_objects.remove(sha.encode('hex'))
             written_object_counter += 1
             qprogress('Writing objects: %d\r' % written_object_counter)
+        else:
+            it = iter(cp.get(sha.encode('hex')))
+            type = it.next()
+            if opt.verbose:
+                print "not writing %s %s" % (sha.encode('hex'), type)
     if not opt.dry_run:
         os.unlink(pack.name)
         os.unlink(pack.name[:-3] + "pack")

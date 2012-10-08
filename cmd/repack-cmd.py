@@ -15,6 +15,45 @@ def run(argv):
     finally:
         os.close(fd)
 
+def traverse_commit(cp, sha_hex, needed_objects):
+    if sha_hex not in needed_objects:
+        needed_objects.add(sha_hex)
+        yield ('commit', sha_hex)
+
+        it = iter(cp.get(sha_hex))
+        type = it.next()
+        assert(type == 'commit')
+        tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
+        for obj in traverse_objects(cp, tree_sha, needed_objects):
+            yield obj
+
+
+def traverse_objects(cp, sha_hex, needed_objects):
+    if sha_hex not in needed_objects:
+        needed_objects.add(sha_hex)
+        it = iter(cp.get(sha_hex))
+        type = it.next()
+
+        if type == 'commit':
+            yield ('commit', sha_hex)
+
+            tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
+
+            for obj in traverse_objects(cp, tree_sha, needed_objects):
+                yield obj
+
+        if type == 'tree':
+            yield ('tree', sha_hex)
+
+            for (mode,mangled_name,sha) in git.tree_decode("".join(it)):
+                for obj in traverse_objects(cp, sha.encode('hex'),
+                                            needed_objects):
+                    yield obj
+
+        elif type == 'blob':
+            yield ('blob', sha_hex)
+
+
 
 optspec = """
 bup repack
@@ -64,7 +103,7 @@ for refname in refnames:
     log('Traversing %s to find needed objects...\n' % refname[11:])
     for date, sha in ((date, sha.encode('hex')) for date, sha in
                       git.rev_list(refname)):
-        for type, sha_ in git.traverse_commit(cp, sha, needed_objects):
+        for type, sha_ in traverse_commit(cp, sha, needed_objects):
             traversed_objects_counter += 1
             qprogress('Traversing objects (%d/%d)\r' %
                       (traversed_objects_counter, total_objects))
@@ -74,7 +113,7 @@ tags = git.tags()
 if len(tags) > 0:
     for key in tags:
         log('Traversing tag %s to find needed objects...\n' % ", ".join(tags[key]))
-        for type, sha in git.traverse_commit(cp, sha, needed_objects):
+        for type, sha in traverse_commit(cp, sha, needed_objects):
             traversed_objects_counter += 1
             qprogress('Traversing objects (%d/%d)\r' %
                       (traversed_objects_counter, total_objects))

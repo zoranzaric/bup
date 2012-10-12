@@ -775,3 +775,8 @@ class BitArray():
             return ((self._data & (1 << i)) >> i) == 1
         else:
             return False
+
+    def set_ratio(self):
+        data_bin = bin(self._data)
+        return data_bin.count("1") / (len(data_bin) - 2)
+

@@ -2,6 +2,8 @@
 bup: It backs things up
 =======================
 
+**WARNING** this is a temporary branch, expect it to be rebased!
+
 bup is a program that backs things up.  It's short for "backup." Can you
 believe that nobody else has named an open source program "bup" after all
 this time?  Me neither.

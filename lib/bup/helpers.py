@@ -10,6 +10,13 @@ import bup._helpers as _helpers
 from bup.options import _tty_width
 tty_width = _tty_width
 
+HUMAN_SIZES = {
+    0: 'B',
+    3: 'kiB',
+    6: 'MiB',
+    9: 'GiB',
+    12: 'TiB'
+}
 
 def atoi(s):
     """Convert the string 's' to an integer. Return 0 if s is not a number."""
@@ -839,3 +846,14 @@ def version_tag():
         if n.startswith('tag: bup-'):
             return n[9:]
     return 'unknown-%s' % _version.COMMIT[:7]
+
+def human_size(number):
+    """Format a size in Bytes to a more human display
+    """
+
+    power = 0
+    disp = number
+    while len(str(disp)) > 3 and power + 3 in HUMAN_SIZES:
+        disp = int(disp/10**3)
+        power += 3
+    return "%s %s" % (disp, HUMAN_SIZES[power])

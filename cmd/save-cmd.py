@@ -291,7 +291,10 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
     if first_root == None:
         dir_name, fs_path = dirp[0]
         first_root = dirp[0]
-        meta = metadata.from_path(fs_path) if fs_path else metadata.Metadata()
+        if fs_path:
+            meta = metadata.from_path(fs_path)
+        else:
+            meta = metadata.Metadata()
         _push(dir_name, meta)
     elif first_root != dirp[0]:
         root_collision = True
@@ -303,7 +306,10 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
     # If switching to a new sub-tree, start a new sub-tree.
     for path_component in dirp[len(parts):]:
         dir_name, fs_path = path_component
-        meta = metadata.from_path(fs_path) if fs_path else metadata.Metadata()
+        if fs_path:
+            meta = metadata.from_path(fs_path)
+        else:
+            meta = metadata.Metadata()
         _push(dir_name, meta)
 
     if not file:
@@ -393,8 +399,11 @@ assert(len(shalists) == 1)
 assert(len(metalists) == 1)
 
 # Finish the root directory.
-tree = _pop(force_tree = None,
-            dir_metadata = metadata.Metadata() if root_collision else None)
+if root_collision:
+    dir_metadata = metadata.Metadata()
+else:
+    dir_metadata = None
+tree = _pop(force_tree = None, dir_metadata = dir_metadata)
 
 if opt.tree:
     print tree.encode('hex')

@@ -786,7 +786,10 @@ def grafted_path_components(graft_points, path):
             grafted_path = '/' + grafted_path.lstrip('/')
             clean_path_components = path_components(clean_path)
             # Count the components that were stripped.
-            strip_count = 0 if old_prefix == '/' else old_prefix.count('/')
+            if old_prefix == '/':
+                strip_count = 0
+            else:
+                strip_count = old_prefix.count('/')
             new_prefix_parts = new_prefix.split('/')
             result_prefix = grafted_path.split('/')[:new_prefix.count('/')]
             result = [(p, None) for p in result_prefix] \

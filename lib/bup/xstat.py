@@ -122,13 +122,41 @@ def mode_str(mode):
     else:
         result += '?'
 
-    result += 'r' if (mode & pystat.S_IRUSR) else '-'
-    result += 'w' if (mode & pystat.S_IWUSR) else '-'
-    result += 'x' if (mode & pystat.S_IXUSR) else '-'
-    result += 'r' if (mode & pystat.S_IRGRP) else '-'
-    result += 'w' if (mode & pystat.S_IWGRP) else '-'
-    result += 'x' if (mode & pystat.S_IXGRP) else '-'
-    result += 'r' if (mode & pystat.S_IROTH) else '-'
-    result += 'w' if (mode & pystat.S_IWOTH) else '-'
-    result += 'x' if (mode & pystat.S_IXOTH) else '-'
+    if (mode & pystat.S_IRUSR):
+        result += 'r'
+    else:
+        result += '-'
+    if (mode & pystat.S_IWUSR):
+        result += 'w'
+    else:
+        result += '-'
+    if (mode & pystat.S_IXUSR):
+        result += 'x'
+    else:
+        result += '-'
+    if (mode & pystat.S_IRGRP):
+        result += 'r'
+    else:
+        result += '-'
+    if (mode & pystat.S_IWGRP):
+        result += 'w'
+    else:
+        result += '-'
+    if (mode & pystat.S_IXGRP):
+        result += 'x'
+    else:
+        result += '-'
+    if (mode & pystat.S_IROTH):
+        result += 'r'
+    else:
+        result += '-'
+    if (mode & pystat.S_IWOTH):
+        result += 'w'
+    else:
+        result += '-'
+    if (mode & pystat.S_IXOTH):
+        result += 'x'
+    else:
+        result += '-'
+
     return result

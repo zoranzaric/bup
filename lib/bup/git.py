@@ -1028,6 +1028,25 @@ class CatPipe:
             raise GitError('invalid object type %r: expected blob/tree/commit'
                            % type)
 
+    def _join_shas(self, it):
+        type = it.next()
+        if type == 'blob':
+            size = 0
+            for blob in it:
+                size += len(blob)
+            yield (size,)
+        elif type == 'tree':
+            treefile = ''.join(it)
+            for (mode, name, sha) in tree_decode(treefile):
+                for thing in self.join_shas(sha.encode('hex')):
+                    if len(thing) == 1:
+                        yield (sha, thing[0])
+                    else:
+                        yield thing
+        else:
+            raise GitError('invalid object type %r: expected blob/tree'
+                           % type)
+
     def join(self, id):
         """Generate a list of the content of all blobs that can be reached
         from an object.  The hash given in 'id' must point to a blob, a tree
@@ -1039,6 +1058,19 @@ class CatPipe:
                 yield d
         except StopIteration:
             log('booger!\n')
+
+    def join_shas(self, id):
+        """Generate a list of the shas of all blobs that can be reached
+        from an object.  The hash given in 'id' must point to a blob or
+        a tree.  The shas of all blobs that can be seen from trees will
+        be added to the list.
+        """
+        try:
+            for s in self._join_shas(self.get(id)):
+                yield s
+        except StopIteration:
+            log('booger!\n')
+
 
 def tags():
     """Return a dictionary of all tags in the form {hash: [tag_names, ...]}."""

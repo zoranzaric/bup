@@ -340,6 +340,17 @@ class File(Node):
             debug1('<<<<File.size() done.\n')
         return self._cached_size
 
+    def shas_with_size(self):
+        """Get this file's shas along with their size."""
+        for thing in cp().join_shas(self.hash.encode('hex')):
+            if len(thing) == 1: # file is only a blob
+                sha = self.hash.encode('hex')
+                size = self.size()
+            elif len(thing) == 2:
+                (sha, size) = thing
+
+            yield (sha, size)
+
 
 _symrefs = 0
 class Symlink(File):

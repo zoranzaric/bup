@@ -48,13 +48,20 @@ get *filename* *localname*
 :   download the contents of *filename* and save it to disk
     as *localname*.  If *localname* is omitted, uses
     *filename* as the local name.
-    
+
 mget *filenames...*
 :   download the contents of the given *filenames* and
     stores them to disk under the same names.  The
     filenames may contain Unix filename globs (`*`, `?`,
     etc.)
-    
+
+du [-h] [*path*]
+:   print the Disk Usage of a file of a folder, both before
+    deduplication and after deduplication. Deduplication here means "how
+    would the deduplication fare if I were to process that file/folder
+    _only_. If -h is given, prints the disk usage in human format (B,
+        kiB, MiB, GiB, TiB)
+
 help
 :   print a list of available commands
 
@@ -78,6 +85,12 @@ quit
 
     bup> get myfile
     Saving 'myfile'
+    bup> du
+    before dedup : 762 chunks, 3613112 B
+     after dedup : 670 chunks, 3168710 B
+    bup> du -h
+    before dedup : 762 chunks, 3 MiB
+     after dedup : 670 chunks, 3 MiB
     bup> quit
 
 

@@ -17,6 +17,70 @@ def do_ls(cmd_args):
     except OptionError, e:
         return
 
+_cached_dus = {}
+def do_du(args):
+
+    display_human_size = False
+    node = pwd
+    for arg in args:
+        if arg == '-h':
+            display_human_size = True
+        else:
+            node = pwd.try_resolve(arg)
+
+    if node.fullname() in  _cached_dus:
+        (dup_shas_count, dup_size, dedup_shas_count, dedup_size) = _cached_dus[node.fullname()]
+    else:
+        dup_shas_count = 0
+        dup_size = 0
+        dedup_size = 0
+
+        # The uniq shas
+        uniq_shas = set()
+
+        for (node_shas_count, node_dup_size, node_dedup_size) in _do_du(node, uniq_shas):
+            dup_shas_count += node_shas_count
+            dup_size += node_dup_size
+            dedup_size += node_dedup_size
+
+        dedup_shas_count = len(uniq_shas)
+        _cached_dus[node.fullname()] = (dup_shas_count,
+                                        dup_size, dedup_shas_count,
+                                        dedup_size)
+
+    if display_human_size:
+        dup_size_disp = human_size(dup_size)
+        dedup_size_disp = human_size(dedup_size)
+    else:
+        dup_size_disp = "%s B" % dup_size
+        dedup_size_disp = "%s B" % dedup_size
+
+    sys.stdout.write("before dedup : %s chunks, %s\n" %
+                     (dup_shas_count,
+                      dup_size_disp))
+    sys.stdout.write(" after dedup : %s chunks, %s\n" %
+                     (dedup_shas_count, dedup_size_disp))
+
+def _do_du(node, uniq_shas):
+
+    # The number of shas in this node
+    total_shas_count = 0
+
+    # The size after deduplication
+    dedup_size = 0
+
+    if isinstance(node, vfs.File):
+        for (sha, size) in node.shas_with_size():
+            total_shas_count += 1
+            if sha not in uniq_shas:
+                uniq_shas.add(sha)
+                dedup_size += size
+        yield (total_shas_count, node.size(), dedup_size)
+
+    else:
+        for sub in node.subs():
+            for thing in _do_du(sub, uniq_shas):
+                yield thing
 
 def write_to_file(inf, outf):
     for blob in chunkyreader(inf):
@@ -196,6 +260,8 @@ for line in lines:
                         except Exception, e:
                             rv = 1
                             log('  error: %s\n' % e)
+        elif cmd == 'du':
+            do_du(words[1:])
         elif cmd == 'help' or cmd == '?':
             log('Commands: ls cd pwd cat get mget help quit\n')
         elif cmd == 'quit' or cmd == 'exit' or cmd == 'bye':

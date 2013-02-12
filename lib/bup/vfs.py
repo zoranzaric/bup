@@ -387,12 +387,12 @@ class Dir(Node):
 
     def _mksubs(self):
         self._subs = {}
-        it = cp(self.decryt).get(self.hash.encode('hex'))
+        it = cp(self.decrypt).get(self.hash.encode('hex'))
         type = it.next()
         if type == 'commit':
             tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
             del it
-            it = cp(self.decryt).get(tree_sha)
+            it = cp(self.decrypt).get(tree_sha)
             type = it.next()
         assert(type == 'tree')
         for (mode,mangled_name,sha) in git.tree_decode(''.join(it)):

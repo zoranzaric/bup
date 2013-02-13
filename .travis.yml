@@ -14,4 +14,3 @@ install: make
 
 script:
   - make test
-  - sudo make test

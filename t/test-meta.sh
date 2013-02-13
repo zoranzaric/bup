@@ -556,6 +556,9 @@ if actually-root; then
         # (patches welcome).
         [[ $(uname) =~ Linux ]] || exit 0
 
+        # These tests require the loop kernel module
+        sudo modprobe loop || exit 0
+
         WVSTART 'meta - general (as root)'
         setup-test-tree
         cd "$TOP/bupmeta.tmp"

@@ -1053,7 +1053,7 @@ class CatPipe:
             it = iter(self.get(sha_hex))
             type = it.next()
             assert(type == 'commit')
-            tree_sha = "".join(it).split("\n")[0].lstrip("tree ").rstrip(" ")
+            tree_sha = "".join(it).split("\n")[0][5:].rstrip(" ")
             for obj in self.traverse_objects(tree_sha):
                 result.append(obj)
 
@@ -1072,9 +1072,9 @@ class CatPipe:
                 yield obj
 
         if type == 'tree':
-            for (mode,mangled_name,sha) in tree_decode("".join(it)):
-                yield ('tree', sha_hex)
+            yield ('tree', sha_hex)
 
+            for (mode,mangled_name,sha) in tree_decode("".join(it)):
                 for obj in self.traverse_objects(sha.encode('hex')):
                     yield obj
 

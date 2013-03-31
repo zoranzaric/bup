@@ -24,6 +24,7 @@ def connect(rhost, port, subcmd, bupcmd='bup'):
         escapedir = re.sub(r'([^\w/])', r'\\\\\\\1', nicedir)
         buglvl = helpers.atoi(os.environ.get('BUP_DEBUG'))
         force_tty = helpers.atoi(os.environ.get('BUP_FORCE_TTY'))
+        # FIXME bupcmd needs sanity checking!
         cmd = r"""
                    sh -c PATH=%s:'$PATH BUP_DEBUG=%s BUP_FORCE_TTY=%s %s %s'
                """ % (escapedir, buglvl, force_tty, bupcmd, subcmd)

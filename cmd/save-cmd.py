@@ -22,6 +22,7 @@ strip      strips the path to every filename given
 strip-path= path-prefix to be stripped when saving
 graft=     a graft point *old_path*=*new_path* (can be used more than once)
 #,compress=  set compression level to # (0-9, 9 is highest) [1]
+bup-command= path to the bup command
 """
 o = options.Options(optspec)
 (opt, flags, extra) = o.parse(sys.argv[1:])
@@ -71,7 +72,11 @@ if opt.name and opt.name.startswith('.'):
     o.fatal("'%s' is not a valid branch name" % opt.name)
 refname = opt.name and 'refs/heads/%s' % opt.name or None
 if opt.remote or is_reverse:
-    cli = client.Client(opt.remote)
+    if opt.bup_command:
+        bupcmd = opt.bup_command
+    else:
+        bupcmd = 'bup'
+    cli = client.Client(opt.remote, bupcmd=bupcmd)
     oldref = refname and cli.read_ref(refname) or None
     w = cli.new_packwriter()
 else:

@@ -72,10 +72,7 @@ if opt.name and opt.name.startswith('.'):
     o.fatal("'%s' is not a valid branch name" % opt.name)
 refname = opt.name and 'refs/heads/%s' % opt.name or None
 if opt.remote or is_reverse:
-    if opt.bup_command:
-        bupcmd = opt.bup_command
-    else:
-        bupcmd = 'bup'
+    bupcmd = opt.bup_command if opt.bup_command else 'bup'
     cli = client.Client(opt.remote, bupcmd=bupcmd)
     oldref = refname and cli.read_ref(refname) or None
     w = cli.new_packwriter()

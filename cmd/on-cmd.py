@@ -7,6 +7,8 @@ optspec = """
 bup on <hostname> index ...
 bup on <hostname> save ...
 bup on <hostname> split ...
+--
+bup-command= path to the bup remote command (optional, default: bup)
 """
 o = options.Options(optspec, optfunc=getopt.getopt)
 (opt, flags, extra) = o.parse(sys.argv[1:])
@@ -35,9 +37,10 @@ try:
         (hostname, port) = hp
 
     argv = extra[1:]
-    p = ssh.connect(hostname, port, 'on--server')
+    bupcmd = opt.bup_command if opt.bup_command else 'bup'
+    p = ssh.connect(hostname, port, 'on--server', bupcmd=bupcmd)
 
-    argvs = '\0'.join(['bup'] + argv)
+    argvs = '\0'.join([bupcmd] + argv)
     p.stdin.write(struct.pack('!I', len(argvs)) + argvs)
     p.stdin.flush()
 

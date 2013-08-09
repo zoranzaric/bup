@@ -948,8 +948,8 @@ if bup fsck --par2-ok; then
 fi
 bup save -n gc "$D"
 bup save -n gc "$D"
-# commented out (for now), it fails in master already
-#WVPASSEQ "$(git fsck --unreachable)" ""
+WVPASS bup gc -f
+WVPASSEQ "$(git fsck --unreachable)" ""
 # Force create a midx-file
 bup midx -f
 WVPASS bup gc -f

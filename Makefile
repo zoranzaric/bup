@@ -90,6 +90,7 @@ runtests-cmdline: all
 	t/test-meta.sh
 	t/test-restore-single-file.sh
 	t/test-rm-between-index-and-save.sh
+	t/test-two-saves-without-changes.sh
 	t/test.sh
 
 stupid:

@@ -942,8 +942,8 @@ if bup fsck --par2-ok; then
 fi
 bup save -n repack "$D"
 bup save -n repack "$D"
-# commented out (for now), it fails in master already
-#WVPASSEQ "$(git fsck --unreachable)" ""
+WVPASS bup repack -f
+WVPASSEQ "$(git fsck --unreachable)" ""
 # Force create a midx-file
 bup midx -f
 WVPASS bup repack -f

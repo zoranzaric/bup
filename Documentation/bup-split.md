@@ -139,6 +139,9 @@ To get the data back, use `bup-join`(1).
 
 # EXAMPLE
     
+    $ bup init
+    Initialized empty Git repository in /root/.bup/
+
     $ tar -cf - /etc | bup split -r myserver: -n mybackup-tar
     tar: Removing leading /' from member names
     Indexing objects: 100% (196/196), done.

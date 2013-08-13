@@ -120,6 +120,7 @@ See the EXAMPLES section for a demonstration.
     
 Create a simple test backup set:
     
+    $ bup init
     $ bup index -u /etc
     $ bup save -n mybackup /etc/passwd /etc/profile
     

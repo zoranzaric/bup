@@ -126,6 +126,9 @@ handling of metadata.
 
 # EXAMPLE
 
+    $ bup init
+    Initialized empty Git repository in /root/.bup/
+
     $ bup index -ux /etc
     Indexing: 1981, done.
 

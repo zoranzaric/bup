@@ -155,6 +155,10 @@ Binary packages of bup are known to be built for the following OSes:
 Using bup
 ---------
 
+- Initialize the repository
+
+        bup init
+
  - Try making a local backup as a tar file:
  
         tar -cvf - /etc | bup split -n local-etc -vv
@@ -201,6 +205,7 @@ Using bup
    style backups, which bypass 'tar' but have some missing features (see
    "Things that are stupid" below):
    	
+        bup init
         bup index -uv /etc
         bup save -n local-etc /etc
    	

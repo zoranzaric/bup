@@ -74,10 +74,12 @@ if opt.remote or is_reverse:
     cli = client.Client(opt.remote)
     oldref = refname and cli.read_ref(refname) or None
     w = cli.new_packwriter()
+    blob_w = cli.new_packwriter()
 else:
     cli = None
     oldref = refname and git.read_ref(refname) or None
     w = git.PackWriter(compression_level=opt.compress)
+    blob_w = git.PackWriter(compression_level=opt.compress)
 
 handle_ctrl_c()
 
@@ -129,7 +131,7 @@ def _pop(force_tree, dir_metadata=None):
             metalist = [('', dir_metadata)] + metalist[1:]
         sorted_metalist = sorted(metalist, key = lambda x : x[0])
         metadata = ''.join([m[1].encode() for m in sorted_metalist])
-        shalist.append((0100644, '.bupm', w.new_blob(metadata)))
+        shalist.append((0100644, '.bupm', blob_w.new_blob(metadata)))
     tree = force_tree or w.new_tree(shalist)
     if shalists:
         shalists[-1].append((GIT_MODE_TREE,
@@ -187,7 +189,9 @@ msr = index.MetaStoreReader(indexfile + '.meta')
 hlink_db = hlinkdb.HLinkDB(indexfile + '.hlink')
 
 def already_saved(ent):
-    return ent.is_valid() and w.exists(ent.sha) and ent.sha
+    return ent.is_valid() \
+               and (w.exists(ent.sha) or blob_w.exists(ent.sha)) \
+               and ent.sha
 
 def wantrecurse_pre(ent):
     return not already_saved(ent)
@@ -361,7 +365,7 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
             else:
                 try:
                     (mode, id) = hashsplit.split_to_blob_or_tree(
-                                            w.new_blob, w.new_tree, [f],
+                                            blob_w.new_blob, w.new_tree, [f],
                                             keep_boundaries=False)
                 except (IOError, OSError), e:
                     add_error('%s: %s' % (ent.name, e))
@@ -376,12 +380,12 @@ for (transname,ent) in r.filter(extra, wantrecurse=wantrecurse_during):
                     add_error(e)
                     lastskip_name = ent.name
                 else:
-                    (mode, id) = (GIT_MODE_SYMLINK, w.new_blob(rl))
+                    (mode, id) = (GIT_MODE_SYMLINK, blob_w.new_blob(rl))
             else:
                 # Everything else should be fully described by its
                 # metadata, so just record an empty blob, so the paths
                 # in the tree and .bupm will match up.
-                (mode, id) = (GIT_MODE_FILE, w.new_blob(""))
+                (mode, id) = (GIT_MODE_FILE, blob_w.new_blob(""))
 
         if id:
             ent.validate(mode, id)
@@ -428,6 +432,7 @@ if opt.commit or opt.name:
         print commit.encode('hex')
 
 msr.close()
+blob_w.close()
 w.close()  # must close before we can update the ref
         
 if opt.name:

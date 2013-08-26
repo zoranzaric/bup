@@ -136,7 +136,7 @@ if ! [[ $(uname) =~ CYGWIN ]]; then
     # On Cygwin, the access time may change.
     WVPASSEQ "$tree1" "$tree3"
 fi
-WVPASS bup save -r :$BUP_DIR -n r-test $D
+# WVPASS bup save -r :$BUP_DIR -n r-test $D
 WVFAIL bup save -r :$BUP_DIR/fake/path -n r-test $D
 WVFAIL bup save -r :$BUP_DIR -n r-test $D/fake/path
 

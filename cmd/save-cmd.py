@@ -74,7 +74,7 @@ if opt.remote or is_reverse:
     cli = client.Client(opt.remote)
     oldref = refname and cli.read_ref(refname) or None
     w = cli.new_packwriter()
-    blob_w = cli.new_packwriter()
+    blob_w = w
 else:
     cli = None
     oldref = refname and git.read_ref(refname) or None
@@ -432,7 +432,8 @@ if opt.commit or opt.name:
         print commit.encode('hex')
 
 msr.close()
-blob_w.close()
+if not (opt.remote or is_reverse):
+    blob_w.close()
 w.close()  # must close before we can update the ref
         
 if opt.name:

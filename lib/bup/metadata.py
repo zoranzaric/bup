@@ -319,14 +319,8 @@ class Metadata:
             assert(self._recognized_file_type())
             os.mknod(path, 0600 | stat.S_IFIFO)
         elif stat.S_ISSOCK(self.mode):
-            try:
-                os.mknod(path, 0600 | stat.S_IFSOCK)
-            except OSError, e:
-                if e.errno == errno.EINVAL:
-                    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                    s.bind(path)
-                else:
-                    raise
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.bind(path)
         elif stat.S_ISLNK(self.mode):
             assert(self._recognized_file_type())
             if self.symlink_target and create_symlinks:
